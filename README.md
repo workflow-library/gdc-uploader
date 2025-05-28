@@ -5,13 +5,18 @@ Edited by Hongwei Liu
 
 ## Overview
 
-Manage uploads of sequence data to the NIH Genomic Data Commons using the gdc data transfer tool.
+A .NET Core console application that manages uploads of genomic sequence data files (FASTQ/BAM) to the NIH Genomic Data Commons (GDC). This tool serves as a robust wrapper for the GDC Data Transfer Tool (gdc-client) with features like multi-threaded uploads, retry logic, and comprehensive testing capabilities.
 
-This Win/Linux/Mac console application is a wrapper for the GDC Data Transfer Tool (gdc-client).  
-It manages uploads of genomic sequence data files to the National Cancer Institute.  
-It requires that the data files are accessible via a file path from the OS upon which it runs.  
-It is known to work on rc-dm2.its.unc.edu, an ITS-RC datamover node with the .NET Core SDK installed.  
-https://gdc.cancer.gov/access-data/gdc-data-transfer-tool
+**Key Features:**
+- Multi-threaded parallel uploads with configurable thread count
+- Automatic retry mechanism for failed uploads  
+- File verification mode to check data availability before uploading
+- Simulator mode for testing upload logic without actual transfers
+- Support for TracSeq naming conventions and generic filename formats
+- CWL (Common Workflow Language) integration for workflow platforms
+- Docker containerization for consistent deployment
+
+🔗 **GDC Resources:** https://gdc.cancer.gov/access-data/gdc-data-transfer-tool
 
 ## Project Structure
 
@@ -22,91 +27,118 @@ gdc-uploader/
 ├── cwl/                    # CWL workflow definitions
 │   ├── gdc-uploader.cwl
 │   └── metadata-generator.cwl
-├── Dockerfile             # Docker image definition
 ├── tests/
-│   ├── gdc-client-simulator/  # Testing simulator
-│   └── test-cwl.sh           # CWL test script
+│   ├── test-data/            # Test data files
+│   ├── test-cwl.sh           # CWL test script
+│   └── TEST-RESULTS.md       # Test execution results
+├── Dockerfile             # Docker image definition
 └── upload2gdc.sln        # Solution file
 ```
 
-## Build and Setup
+## Quick Start
 
-### Docker Build
+### 1. Build Docker Image
 
 ```bash
-# Clone repository
-git clone https://github.com/your-repo/gdc-uploader.git
+# Clone repository and build
+git clone <repository-url>
 cd gdc-uploader
-
-# Build Docker image
-docker build -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
+docker build -t gdc-uploader .
 ```
 
-## Testing
-
-Run the CWL test script to verify the setup:
+### 2. Run Tests
 
 ```bash
+# Verify everything works with included test data
 cd tests
 ./test-cwl.sh
 ```
 
-This test script:
-- Creates test data files
-- Generates a GDC metadata JSON file
-- Runs the uploader in simulator mode
-- Demonstrates all required inputs
-
-## CWL Usage
-
-### Upload Files with CWL
-
-Create a job file (e.g., `upload-job.yml`):
-
-```yaml
-metadata_file:
-  class: File
-  path: /path/to/gdc-metadata.json
-files_directory:
-  class: Directory
-  path: /path/to/sequence-files
-token_file:
-  class: File
-  path: /path/to/gdc-token.txt
-thread_count: 4
-retry_count: 3
-multipart: "yes"
-```
-
-Run with cwltool:
+### 3. Production Usage
 
 ```bash
-cwltool --outdir ./output cwl/gdc-uploader.cwl upload-job.yml
+# Check files exist before uploading
+cwltool --outdir ./output cwl/gdc-uploader.cwl \
+  --upload_report /path/to/upload-report.tsv \
+  --metadata_file /path/to/metadata.json \
+  --files_directory /path/to/files \
+  --files_only
+
+# Production upload
+cwltool --outdir ./output cwl/gdc-uploader.cwl \
+  --upload_report /path/to/upload-report.tsv \
+  --metadata_file /path/to/metadata.json \
+  --files_directory /path/to/files \
+  --token_file /path/to/gdc-token.txt \
+  --thread_count 4
 ```
 
-### Generate Metadata with CWL
+## Usage Modes
 
-Create a job file (e.g., `metadata-job.yml`):
-
-```yaml
-upload_list:
-  class: File
-  path: /path/to/upload-list.txt
-experiment_type: rnaseq  # Options: smallrna, rnaseq, rnaseqexome
-use_dev_server: false
-```
-
-Run with cwltool:
-
+### File Verification Only
+Check if all required files exist without uploading:
 ```bash
-cwltool --outdir ./output cwl/metadata-generator.cwl metadata-job.yml
+cwltool cwl/gdc-uploader.cwl \
+  --metadata_file metadata.json \
+  --files_directory /path/to/files \
+  --files_only
 ```
+
+### Simulator Mode (Testing)
+Test upload logic without actual transfers:
+```bash
+cwltool cwl/gdc-uploader.cwl \
+  --upload_report upload-report.tsv \
+  --metadata_file metadata.json \
+  --files_directory /path/to/files \
+  --token_file token.txt \
+  --simulator
+```
+
+### Production Upload
+Real upload to GDC:
+```bash
+cwltool cwl/gdc-uploader.cwl \
+  --upload_report upload-report.tsv \
+  --metadata_file metadata.json \
+  --files_directory /path/to/files \
+  --token_file token.txt \
+  --thread_count 4 \
+  --retry_count 3
+```
+
+## File Requirements
+
+### Input Files
+- **Upload Report** (TSV): GDC-generated file with UUIDs and metadata
+- **Metadata File** (JSON): GDC-compliant metadata for each file
+- **Sequence Files**: FASTQ/BAM files organized in expected directory structure
+- **GDC Token**: Authentication token from GDC portal
+
+### Directory Structure
+```
+files_directory/
+├── fastq/              # FASTQ files go here
+│   ├── file1.fastq.gz
+│   └── file2.fastq.gz
+└── uBam/              # BAM files organized by run ID
+    └── run_id/
+        ├── file1.bam
+        └── file2.bam
+```
+
+## Documentation
+
+- 📖 **[Complete Usage Guide](docs/usage-diagram.md)** - Detailed workflows and command reference
+- 🧪 **[Test Data](tests/test-data/)** - Sample files for testing
+- 🐳 **[Docker Usage](docs/README.md)** - Container deployment guide
+- 📋 **[CLAUDE.md](CLAUDE.md)** - Developer reference for AI assistance
 
 ## Requirements
 
-- .NET 5.0 SDK
-- GDC Data Transfer Tool (gdc-client)
-- Valid GDC authentication token
+- **Runtime**: .NET 5.0 or Docker
+- **Dependencies**: GDC Data Transfer Tool (gdc-client) - included in Docker image
+- **Authentication**: Valid GDC token from https://portal.gdc.cancer.gov/
 
 
 

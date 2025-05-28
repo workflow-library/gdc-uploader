@@ -25,7 +25,17 @@ namespace upload2gdc
 
                 SeqFileInfo newDataFile = Program.SeqDataFiles[key];
                 string[] subs = newDataFile.Submitter_id.Split('_');
-                string runId = subs[0] + "_" + subs[1] + "_" + subs[2] + "_" + subs[3];  // first 35(34 or ...) chars of the submitter_id is our run_id
+                string runId = "";
+                
+                // Handle different filename formats
+                if (subs.Length >= 4)
+                {
+                    runId = subs[0] + "_" + subs[1] + "_" + subs[2] + "_" + subs[3];  // TracSeq format
+                }
+                else
+                {
+                    runId = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(newDataFile.Submitter_id)); // For other formats, use submitter_id without extensions
+                }
 
                 string fileLocation = "";
 
@@ -78,7 +88,17 @@ namespace upload2gdc
 
                 string[] subs = fileName.Split('_');
 
-                string runId = subs[0] + "_" + subs[1] + "_" + subs[2] + "_" + subs[3];  // first 35(34 or ... ) chars is our run_id
+                string runId = "";
+                
+                // Handle different filename formats
+                if (subs.Length >= 4)
+                {
+                    runId = subs[0] + "_" + subs[1] + "_" + subs[2] + "_" + subs[3];  // TracSeq format
+                }
+                else
+                {
+                    runId = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(fileName)); // For other formats, use filename without extensions
+                }
 
                 string fileLocation = "";
                 if (fileName.IndexOf("bam") != -1)
@@ -112,8 +132,12 @@ namespace upload2gdc
             Console.WriteLine($"Out of {numFilesFound + numFilesNotFound} files in the json md file, {numFilesFound} were found, and {numFilesNotFound} were Not found.");
             Console.Write(Environment.NewLine);
 
-            Console.WriteLine("Press any key within 4 seconds to show list of file names");
-            bool writeDetails = Task.Factory.StartNew(() => Console.ReadKey()).Wait(TimeSpan.FromSeconds(4.0));
+            bool writeDetails = false;
+            if (Console.IsInputRedirected == false)
+            {
+                Console.WriteLine("Press any key within 4 seconds to show list of file names");
+                writeDetails = Task.Factory.StartNew(() => Console.ReadKey()).Wait(TimeSpan.FromSeconds(4.0));
+            }
 
             if (writeDetails)
             {
@@ -136,8 +160,12 @@ namespace upload2gdc
             {
                 Console.WriteLine($"All {Program.SeqDataFiles.Count()} of the files to be uploaded were found" + Environment.NewLine);
 
-                Console.WriteLine("Press any key within 3 seconds to show list of file names");
-                bool writeDetails = Task.Factory.StartNew(() => Console.ReadKey()).Wait(TimeSpan.FromSeconds(3.0));
+                bool writeDetails = false;
+                if (Console.IsInputRedirected == false)
+                {
+                    Console.WriteLine("Press any key within 3 seconds to show list of file names");
+                    writeDetails = Task.Factory.StartNew(() => Console.ReadKey()).Wait(TimeSpan.FromSeconds(3.0));
+                }
 
                 if (writeDetails)
                 {

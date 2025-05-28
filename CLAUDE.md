@@ -12,7 +12,6 @@ gdc-uploader is a .NET Core console application that serves as a wrapper for the
 gdc-uploader/
 ├── src/upload2gdc/         # Main application
 ├── tests/
-│   ├── gdc-client-simulator/  # Testing simulator
 │   └── test-cwl.sh            # CWL test script
 ├── cwl/                    # CWL workflow definitions
 │   ├── gdc-uploader.cwl
@@ -35,13 +34,41 @@ cd tests
 ./test-cwl.sh
 ```
 
-### Production CWL Usage
-```bash
-# Upload files
-cwltool --outdir ./output cwl/gdc-uploader.cwl upload-job.yml
+### CWL Usage with Command-Line Arguments
 
-# Generate metadata
-cwltool --outdir ./output cwl/metadata-generator.cwl metadata-job.yml
+#### Upload Files
+```bash
+cwltool \
+  --outdir ./output \
+  cwl/gdc-uploader.cwl \
+  --metadata_file /path/to/gdc-metadata.json \
+  --files_directory /path/to/sequence-files \
+  --token_file /path/to/gdc-token.txt \
+  --thread_count 4 \
+  --retry_count 3 \
+  --simulator true \
+  --multipart "yes"
+```
+
+#### Generate Metadata
+```bash
+cwltool \
+  --outdir ./output \
+  cwl/metadata-generator.cwl \
+  --upload_list /path/to/upload-list.txt \
+  --experiment_type rnaseq \
+  --use_dev_server false
+```
+
+#### Check Files Only (Dry Run)
+```bash
+cwltool \
+  --outdir ./output \
+  cwl/gdc-uploader.cwl \
+  --metadata_file /path/to/gdc-metadata.json \
+  --files_directory /path/to/sequence-files \
+  --files_only true \
+  --simulator true
 ```
 
 ## Architecture
@@ -89,3 +116,33 @@ cwltool --outdir ./output cwl/metadata-generator.cwl metadata-job.yml
 - **NEVER** include `CMD` or `ENTRYPOINT` directives in Dockerfiles for this project
 - The container will be executed via CWL tool (cwltool) or Seven Bridges platform
 - The CWL definitions specify the entry points and commands
+
+## Testing
+
+The repository includes CWL definitions and test data. To test locally:
+
+```bash
+# Run the test script
+./tests/test-cwl.sh
+
+# Or test individual commands with cwltool:
+# Test 1: Check files only
+cwltool --outdir /tmp/test-output /workspaces/gdc-uploader/cwl/gdc-uploader.cwl \
+  --upload_report /workspaces/gdc-uploader/tests/test-data/upload-report.tsv \
+  --metadata_file /workspaces/gdc-uploader/tests/test-data/gdc-metadata.json \
+  --files_directory /workspaces/gdc-uploader/tests/test-data \
+  --files_only
+
+# Test 2: Run with simulator
+cwltool --outdir /tmp/test-output /workspaces/gdc-uploader/cwl/gdc-uploader.cwl \
+  --upload_report /workspaces/gdc-uploader/tests/test-data/upload-report.tsv \
+  --metadata_file /workspaces/gdc-uploader/tests/test-data/gdc-metadata.json \
+  --files_directory /workspaces/gdc-uploader/tests/test-data \
+  --token_file /workspaces/gdc-uploader/tests/test-data/gdc-token.txt \
+  --simulator \
+  --thread_count 2
+```
+
+### Known Issues Fixed
+- Fixed array index out of bounds errors when parsing non-TracSeq format filenames
+- Fixed console input blocking issues when running in non-interactive environments (e.g., Docker containers)

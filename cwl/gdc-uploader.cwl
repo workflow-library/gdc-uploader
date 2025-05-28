@@ -10,7 +10,7 @@ doc: |
 
 requirements:
   DockerRequirement:
-    dockerPull: "cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest"
+    dockerPull: "gdc-uploader:latest"
   ResourceRequirement:
     ramMin: 2048
     coresMin: 2
@@ -83,15 +83,13 @@ inputs:
 
 outputs:
   upload_report_output:
-    type: File
+    type: File?
     outputBinding:
       glob: "*.tsv"
     doc: "Upload report with status of each file"
 
   log_files:
-    type:
-      type: array
-      items: File
+    type: File[]?
     outputBinding:
       glob: "*.log"
     doc: "Log files from upload threads"

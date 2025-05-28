@@ -9,32 +9,34 @@ graph TB
     %% Upload workflow
     Choice -->|Upload Files| Upload[Upload Files to GDC]
     Upload --> CheckFiles{Check files exist?}
-    CheckFiles -->|Yes| UploadCmd[["dotnet upload2gdc.dll<br/>--md metadata.json<br/>--files /path/to/files<br/>--token token.txt<br/>--ur report.tsv"]]
-    CheckFiles -->|No| FilesOnly[["dotnet upload2gdc.dll<br/>--md metadata.json<br/>--files /path/to/files<br/>--filesonly"]]
+    CheckFiles -->|Yes| UploadReal[["Upload Mode:<br/>--ur report.tsv<br/>--md metadata.json<br/>--files /path/to/files<br/>--token token.txt"]]
+    CheckFiles -->|No| FilesOnly[["Files Check Mode:<br/>--ur report.tsv<br/>--md metadata.json<br/>--files /path/to/files<br/>--filesonly"]]
+    
+    %% Test workflow
+    Choice -->|Test/Simulate| TestMode[Test Upload Process]
+    TestMode --> SimMode[["Simulator Mode:<br/>--ur report.tsv<br/>--md metadata.json<br/>--files /path/to/files<br/>--sim<br/>--token token.txt"]]
     
     %% Metadata generation workflow
     Choice -->|Generate Metadata| GenMeta[Generate GDC Metadata]
     GenMeta --> ExpType{Select Experiment Type}
-    ExpType -->|Small RNA| SmallRNA[["dotnet upload2gdc.dll<br/>--mdgen uploadList.txt<br/>--mdgentype smallrna"]]
-    ExpType -->|RNA-seq| RNASeq[["dotnet upload2gdc.dll<br/>--mdgen uploadList.txt<br/>--mdgentype rnaseq"]]
-    ExpType -->|RNA-seq Exome| RNASeqExome[["dotnet upload2gdc.dll<br/>--mdgen uploadList.txt<br/>--mdgentype rnaseqexome"]]
+    ExpType -->|Small RNA| SmallRNA[["Small RNA:<br/>--mdgen uploadList.txt<br/>--mdgentype smallrna"]]
+    ExpType -->|RNA-seq| RNASeq[["RNA-seq:<br/>--mdgen uploadList.txt<br/>--mdgentype rnaseq"]]
+    ExpType -->|RNA-seq Exome| RNASeqExome[["RNA-seq Exome:<br/>--mdgen uploadList.txt<br/>--mdgentype rnaseqexome"]]
     
-    %% Docker workflow
-    Choice -->|Use Docker| Docker[Run with Docker]
-    Docker --> DockerCmd[["docker run -v /data:/data<br/>-v /token:/token<br/>cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest<br/>--md /data/metadata.json<br/>--files /data/files<br/>--token /token/gdc-token.txt"]]
-    
-    %% Testing workflow
-    Choice -->|Test Upload Logic| Test[Test with Simulator]
-    Test --> SimCmd[["dotnet run --project tests/gdc-client-simulator<br/>UUID speed<br/><br/>speed: fast | normal | slow"]]
+    %% CWL workflow
+    Choice -->|Use CWL| CWLMode[Run with CWL]
+    CWLMode --> CWLTest[["CWL Test:<br/>cwltool gdc-uploader.cwl<br/>--upload_report report.tsv<br/>--metadata_file metadata.json<br/>--files_directory /path/to/files<br/>--simulator"]]
+    CWLMode --> CWLProd[["CWL Production:<br/>cwltool gdc-uploader.cwl<br/>--upload_report report.tsv<br/>--metadata_file metadata.json<br/>--files_directory /path/to/files<br/>--token_file token.txt"]]
     
     %% End states
-    UploadCmd --> Success[Upload Complete]
+    UploadReal --> Success[Upload Complete]
     FilesOnly --> FileCheck[File Check Complete]
+    SimMode --> TestComplete[Test Complete]
     SmallRNA --> MetaGen[Metadata Generated]
     RNASeq --> MetaGen
     RNASeqExome --> MetaGen
-    DockerCmd --> Success
-    SimCmd --> TestComplete[Test Complete]
+    CWLTest --> TestComplete
+    CWLProd --> Success
     
     %% Styling
     classDef command fill:#e1f5fe,stroke:#01579b,stroke-width:2px
@@ -42,129 +44,195 @@ graph TB
     classDef decision fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     classDef endpoint fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     
-    class UploadCmd,FilesOnly,SmallRNA,RNASeq,RNASeqExome,DockerCmd,SimCmd command
-    class Upload,GenMeta,Docker,Test process
+    class UploadReal,FilesOnly,SimMode,SmallRNA,RNASeq,RNASeqExome,CWLTest,CWLProd command
+    class Upload,TestMode,GenMeta,CWLMode process
     class Choice,CheckFiles,ExpType decision
     class Success,FileCheck,MetaGen,TestComplete endpoint
 ```
 
 ## Command Reference
 
-### 1. File Upload
+### 1. File Upload (Production)
 ```bash
 # Full upload with all options
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll \
-  --ur ~/gdc-upload-report.tsv \      # Upload report output
+dotnet /app/upload2gdc.dll \
+  --ur ~/gdc-upload-report.tsv \      # Upload report from GDC
   --md ~/gdc-metadata-file.json \     # GDC metadata file
   --files /proj/seq/tracseq/delivery \ # Directory with files
   --token ~/token.txt \               # GDC auth token
-  --tc 8 \                            # Thread count (optional)
-  --rc 2 \                            # Retry count (optional)
-  --mp                                # Use multipart upload (optional)
+  --threads 8 \                       # Thread count (default: 10)
+  --retries 2 \                       # Retry count (default: 3)
+  --multipart yes                     # Force multipart upload
 ```
 
 ### 2. File Verification (Dry Run)
 ```bash
-# Check if all files in metadata exist
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll \
+# Check if all files in metadata exist without upload report
+dotnet /app/upload2gdc.dll \
+  --md metadata.json \
+  --files /path/to/files \
+  --filesonly
+
+# Check with upload report (more detailed)
+dotnet /app/upload2gdc.dll \
+  --ur upload-report.tsv \
   --md metadata.json \
   --files /path/to/files \
   --filesonly
 ```
 
-### 3. Metadata Generation
+### 3. Testing with Simulator
+```bash
+# Test upload process without actually uploading
+dotnet /app/upload2gdc.dll \
+  --ur upload-report.tsv \
+  --md metadata.json \
+  --files /path/to/files \
+  --token token.txt \
+  --sim
+```
+
+### 4. Metadata Generation
 ```bash
 # Generate metadata for different experiment types
 # Small RNA
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll \
+dotnet /app/upload2gdc.dll \
   --mdgen uploadList.txt \
   --mdgentype smallrna \
   --mdgendev  # Optional: use dev server
 
 # RNA-seq
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll \
+dotnet /app/upload2gdc.dll \
   --mdgen uploadList.txt \
   --mdgentype rnaseq
 
 # RNA-seq Exome
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll \
+dotnet /app/upload2gdc.dll \
   --mdgen uploadList.txt \
   --mdgentype rnaseqexome
 ```
 
-### 4. Docker Usage
+### 5. Docker Usage
 ```bash
 # Build image
-docker build -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
+docker build -t gdc-uploader .
 
-# Run upload
-docker run \
+# Run upload (production)
+docker run --rm \
   -v /local/data:/data \
-  -v /local/token:/token \
-  cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest \
+  gdc-uploader:latest \
+  /app/upload2gdc \
+  --ur /data/upload-report.tsv \
   --md /data/metadata.json \
-  --files /data/files \
-  --token /token/gdc-token.txt \
-  --ur /data/upload-report.tsv
-```
+  --files /data \
+  --token /data/gdc-token.txt
 
-### 5. Testing with Simulator
-```bash
-# Test upload logic with different speeds
-dotnet run --project tests/gdc-client-simulator abc-123-def fast
-dotnet run --project tests/gdc-client-simulator abc-123-def normal
-dotnet run --project tests/gdc-client-simulator abc-123-def slow
+# Run file check only
+docker run --rm \
+  -v /local/data:/data \
+  gdc-uploader:latest \
+  /app/upload2gdc \
+  --md /data/metadata.json \
+  --files /data \
+  --filesonly
 ```
 
 ## CWL Workflow Usage
 
-### Upload Workflow
+### Upload Workflow (Production)
 ```bash
-cwl-runner cwl/gdc-uploader.cwl upload-job.yml
+cwltool --outdir ./output cwl/gdc-uploader.cwl \
+  --upload_report /path/to/upload-report.tsv \
+  --metadata_file /path/to/metadata.json \
+  --files_directory /path/to/files \
+  --token_file /path/to/token.txt \
+  --thread_count 4 \
+  --retry_count 3
 ```
 
-Example `upload-job.yml`:
-```yaml
-metadata_file:
-  class: File
-  path: /path/to/metadata.json
-files_directory:
-  class: Directory
-  path: /path/to/files
-token_file:
-  class: File
-  path: /path/to/token.txt
-thread_count: 8
-retry_count: 2
-```
-
-### Metadata Generation Workflow
+### Test Workflow (Simulator)
 ```bash
-cwl-runner cwl/metadata-generator.cwl metadata-job.yml
+cwltool --outdir ./output cwl/gdc-uploader.cwl \
+  --upload_report /path/to/upload-report.tsv \
+  --metadata_file /path/to/metadata.json \
+  --files_directory /path/to/files \
+  --token_file /path/to/token.txt \
+  --simulator \
+  --thread_count 2
 ```
 
-Example `metadata-job.yml`:
-```yaml
-upload_list:
-  class: File
-  path: /path/to/uploadList.txt
-experiment_type: smallrna
-use_dev_server: false
+### File Check Workflow
+```bash
+cwltool --outdir ./output cwl/gdc-uploader.cwl \
+  --upload_report /path/to/upload-report.tsv \
+  --metadata_file /path/to/metadata.json \
+  --files_directory /path/to/files \
+  --files_only
+```
+
+### Using Test Data
+```bash
+# Run the included test script
+cd tests
+./test-cwl.sh
+
+# Or run tests manually
+cwltool --outdir /tmp/test-output ../cwl/gdc-uploader.cwl \
+  --upload_report test-data/upload-report.tsv \
+  --metadata_file test-data/gdc-metadata.json \
+  --files_directory test-data \
+  --files_only
 ```
 
 ## Key Options Explained
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--ur` | Upload report file path | Required |
-| `--md` | GDC metadata JSON file | Required |
-| `--files` | Directory containing files to upload | Required |
-| `--token` | GDC authentication token file | Required |
-| `--tc` | Number of concurrent upload threads | 4 |
-| `--rc` | Number of retry attempts for failed uploads | 1 |
-| `--mp` | Use multipart upload mode | false |
-| `--sk` | Skip file containing UUIDs to skip | Optional |
-| `--filesonly` | Only check if files exist, don't upload | false |
-| `--mdgen` | Generate metadata from upload list | Optional |
-| `--mdgentype` | Type of experiment (smallrna/rnaseq/rnaseqexome) | Required with --mdgen |
-| `--mdgendev` | Use GDC development server | false |
+| Option | Description | Default | Required |
+|--------|-------------|---------|----------|
+| `--ur` | Upload report TSV file from GDC | - | Yes (except --filesonly mode) |
+| `--md` | GDC metadata JSON file | - | Yes |
+| `--files` | Directory containing files to upload | - | Yes |
+| `--token` | GDC authentication token file | token.txt | Yes (except --filesonly/--sim) |
+| `--threads` | Number of concurrent upload threads | 10 | No |
+| `--retries` | Number of retry attempts for failed uploads | 3 | No |
+| `--multipart` | Force multipart (yes/no) or auto (program) | yes | No |
+| `--skip` | File containing UUIDs to skip | - | No |
+| `--filesonly` | Only check if files exist, don't upload | false | No |
+| `--sim` | Use simulator instead of real gdc-client | false | No |
+| `--mdgen` | Generate metadata from upload list | - | No |
+| `--mdgentype` | Experiment type (smallrna/rnaseq/rnaseqexome) | - | Yes with --mdgen |
+| `--mdgendev` | Use GDC development server | false | No |
+| `--log` | Directory for log files | auto-generated | No |
+| `--verbose` | Print all messages to stdout | false | No |
+
+## File Requirements
+
+### Upload Report Format (TSV)
+The upload report should be a tab-separated file with these columns:
+- `id`: GDC UUID for the file
+- `related_case`: Case identifier
+- `entity_type`: Should be "submitted_unaligned_reads"
+- `entity_id`: Entity identifier
+- `entity_submitter_id`: Submitter ID (must match metadata)
+- `file_size`: File size in bytes
+- `file_md5`: MD5 checksum
+
+### Metadata Format (JSON)
+The metadata file should contain an array of objects with:
+- `submitter_id`: Must match `entity_submitter_id` in upload report
+- `file_name`: Actual filename to upload
+- `file_size`: File size in bytes
+- `md5sum`: MD5 checksum
+- Additional GDC metadata fields
+
+### File Organization
+Files should be organized as:
+```
+files_directory/
+├── fastq/           # For FASTQ files
+│   ├── file1.fastq.gz
+│   └── file2.fastq.gz
+└── uBam/           # For BAM files
+    └── run_id/
+        ├── file1.bam
+        └── file2.bam
+```

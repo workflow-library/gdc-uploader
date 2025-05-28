@@ -5,14 +5,12 @@ WORKDIR /src
 # Copy solution and project files
 COPY upload2gdc.sln .
 COPY src/upload2gdc/upload2gdc.csproj src/upload2gdc/
-COPY tests/gdc-client-simulator/gdc-client-simulator.csproj tests/gdc-client-simulator/
 
 # Restore dependencies
 RUN dotnet restore
 
 # Copy source code
 COPY src/ src/
-COPY tests/ tests/
 
 # Build the application
 RUN dotnet build -c Release --no-restore
