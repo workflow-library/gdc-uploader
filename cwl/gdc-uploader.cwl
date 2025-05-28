@@ -7,6 +7,10 @@ doc: |
   Manage uploads of sequence data to the NIH Genomic Data Commons using the gdc data transfer tool.
   This tool is a wrapper for the GDC Data Transfer Tool (gdc-client) that manages uploads of 
   genomic sequence data files to the National Cancer Institute.
+  
+  Version: 2025.05.28.1
+  Last Updated: 2025-05-28
+  Changes: Initial versioned release with Seven Bridges compatibility fixes
 
 requirements:
   DockerRequirement:

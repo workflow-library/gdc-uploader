@@ -201,3 +201,4 @@ cat gdc-upload-stdout.log
 ## Memories
 
 - Always run tests using cwltool
+- Create a versioning system in the cwl doc section could be today's date and the just incrementing for each time you change it
