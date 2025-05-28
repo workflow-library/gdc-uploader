@@ -10,7 +10,7 @@ doc: |
 
 requirements:
   DockerRequirement:
-    dockerPull: "gdc-uploader:latest"
+    dockerPull: "cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest"
   ResourceRequirement:
     ramMin: 2048
     coresMin: 2
@@ -37,22 +37,22 @@ inputs:
     doc: "Directory containing files to upload"
 
   token_file:
-    type: File
+    type: File?
     inputBinding:
       prefix: --token
-    doc: "Path to GDC authentication token file"
+    doc: "Path to GDC authentication token file (not required when using simulator)"
 
   thread_count:
     type: int?
     default: 4
     inputBinding:
-      prefix: --tc
-    doc: "Number of concurrent upload threads (default: 4)"
+      prefix: --threads
+    doc: "Number of concurrent upload threads (default: 10)"
 
   skip_file:
     type: File?
     inputBinding:
-      prefix: --sk
+      prefix: --skip
     doc: "Path to file containing UUIDs to skip"
 
   files_only:
@@ -63,19 +63,26 @@ inputs:
 
   retry_count:
     type: int?
-    default: 1
+    default: 3
     inputBinding:
-      prefix: --rc
-    doc: "Number of times to retry failed uploads (default: 1)"
+      prefix: --retries
+    doc: "Number of times to retry failed uploads (default: 3)"
 
   multipart:
+    type: string?
+    default: "yes"
+    inputBinding:
+      prefix: --multipart
+    doc: "For uploads, force multipart (yes), force single chunk (no), or allow for dtt default behavior (program)"
+
+  simulator:
     type: boolean?
     inputBinding:
-      prefix: --mp
-    doc: "Use multipart upload mode"
+      prefix: --sim
+    doc: "Use simulator instead of the gdc data transfer tool"
 
 outputs:
-  upload_report:
+  upload_report_output:
     type: File
     outputBinding:
       glob: "*.tsv"

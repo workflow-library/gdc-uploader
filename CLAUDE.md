@@ -9,65 +9,40 @@ gdc-uploader is a .NET Core console application that serves as a wrapper for the
 ## Project Structure
 
 ```
-gdcupload-master/
+gdc-uploader/
 ├── src/upload2gdc/         # Main application
-├── tests/gdc-client-simulator/  # Testing simulator
+├── tests/
+│   ├── gdc-client-simulator/  # Testing simulator
+│   └── test-cwl.sh            # CWL test script
 ├── cwl/                    # CWL workflow definitions
 │   ├── gdc-uploader.cwl
 │   └── metadata-generator.cwl
 ├── Dockerfile              # Docker image definition
-├── .dockerignore
 └── upload2gdc.sln         # Solution file
 ```
 
 ## Build and Run Commands
 
-### Build
+### Docker Build
 ```bash
-cd gdcupload-master
-dotnet build
+docker build -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
 ```
 
-### Run
+### CWL Testing
 ```bash
-# Show help
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll --help
+# Run the test script that demonstrates CWL usage
+cd tests
+./test-cwl.sh
+```
 
+### Production CWL Usage
+```bash
 # Upload files
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll --ur ~/gdc-upload-report.tsv --md ~/gdc-metadata-file.json --files /proj/seq/tracseq/delivery --token ~/token.txt
+cwltool --outdir ./output cwl/gdc-uploader.cwl upload-job.yml
 
-# Check if files are in place (dry run)
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll --md metadata.json --files /path/to/files --filesonly
-
-# Generate GDC metadata
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll --mdgen uploadList.txt --mdgentype smallrna
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll --mdgen uploadList.txt --mdgentype rnaseq
-dotnet src/upload2gdc/bin/Debug/net5.0/upload2gdc.dll --mdgen uploadList.txt --mdgentype rnaseqexome
+# Generate metadata
+cwltool --outdir ./output cwl/metadata-generator.cwl metadata-job.yml
 ```
-
-### Docker Commands
-```bash
-# Build Docker image
-docker build -t gdc-uploader .
-
-# Run with Docker
-docker run -v /path/to/data:/data -v /path/to/token:/token gdc-uploader \
-  --md /data/metadata.json \
-  --files /data/files \
-  --token /token/gdc-token.txt
-```
-
-### Test with Simulator
-```bash
-# Build and run the GDC client simulator for testing
-dotnet run --project tests/gdc-client-simulator [UUID] [speed]
-
-# Speed options: fast (5-10s), normal (15-30s), slow (200-600s, most realistic)
-# Example:
-dotnet run --project tests/gdc-client-simulator abc-123-def fast
-```
-
-The simulator mimics gdc-client behavior with ~50% failure rate to test error handling and retry logic.
 
 ## Architecture
 
@@ -107,3 +82,10 @@ The simulator mimics gdc-client behavior with ~50% failure rate to test error ha
 - Uses thread-safe collections (ConcurrentDictionary, ConcurrentBag) for managing upload state
 - Each upload thread maintains its own log file
 - Thread-safe progress reporting with locks on shared resources
+
+## Important Guidelines
+
+### Dockerfile Best Practices
+- **NEVER** include `CMD` or `ENTRYPOINT` directives in Dockerfiles for this project
+- The container will be executed via CWL tool (cwltool) or Seven Bridges platform
+- The CWL definitions specify the entry points and commands
