@@ -115,12 +115,12 @@ dotnet /app/upload2gdc.dll \
 ### 5. Docker Usage
 ```bash
 # Build image
-docker build -t gdc-uploader .
+docker build -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
 
 # Run upload (production)
 docker run --rm \
   -v /local/data:/data \
-  gdc-uploader:latest \
+  cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest \
   /app/upload2gdc \
   --ur /data/upload-report.tsv \
   --md /data/metadata.json \
@@ -130,7 +130,7 @@ docker run --rm \
 # Run file check only
 docker run --rm \
   -v /local/data:/data \
-  gdc-uploader:latest \
+  cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest \
   /app/upload2gdc \
   --md /data/metadata.json \
   --files /data \

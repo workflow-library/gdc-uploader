@@ -43,7 +43,7 @@ gdc-uploader/
 # Clone repository and build
 git clone <repository-url>
 cd gdc-uploader
-docker build -t gdc-uploader .
+docker build -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
 ```
 
 ### 2. Run Tests
@@ -116,6 +116,9 @@ cwltool cwl/gdc-uploader.cwl \
 - **GDC Token**: Authentication token from GDC portal
 
 ### Directory Structure
+The application supports files in the expected subdirectories OR directly in the base directory:
+
+**Option 1 - Structured (Recommended):**
 ```
 files_directory/
 ├── fastq/              # FASTQ files go here
@@ -125,6 +128,17 @@ files_directory/
     └── run_id/
         ├── file1.bam
         └── file2.bam
+```
+
+**Option 2 - Flat (Also Supported):**
+```
+files_directory/
+├── file1.fastq.gz     # Files can be directly in base directory
+├── file2.fastq.gz
+├── file1.bam
+├── file2.bam
+├── metadata.json
+└── upload-report.tsv
 ```
 
 ## Documentation

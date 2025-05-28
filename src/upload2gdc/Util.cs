@@ -52,17 +52,28 @@ namespace upload2gdc
                 }
 
 
-                if (File.Exists(Path.Combine(fileLocation, newDataFile.DataFileName)))
+                // Try the expected subdirectory first, then try the base directory
+                string fullPath = Path.Combine(fileLocation, newDataFile.DataFileName);
+                string baseDirectoryPath = Path.Combine(basePath, newDataFile.DataFileName);
+                
+                if (File.Exists(fullPath))
                 {
                     newDataFile.DataFileLocation = fileLocation;
                     newDataFile.ReadyForUpload = true;
                     Program.SeqDataFiles[key] = newDataFile;
-                    //Console.WriteLine($"Found: {Path.Combine(fileLocation, newDataFile.DataFileName)}");
+                    //Console.WriteLine($"Found: {fullPath}");
+                }
+                else if (File.Exists(baseDirectoryPath))
+                {
+                    newDataFile.DataFileLocation = basePath; // Use base directory as file location
+                    newDataFile.ReadyForUpload = true;
+                    Program.SeqDataFiles[key] = newDataFile;
+                    //Console.WriteLine($"Found in base directory: {baseDirectoryPath}");
                 }
                 else
                 {
                     numFilesNotFound++;
-                    //Console.WriteLine($"Not found: {Path.Combine(fileLocation, newDataFile.DataFileName)}");
+                    //Console.WriteLine($"Not found: {fullPath} or {baseDirectoryPath}");
                 }
             }
 
@@ -114,17 +125,27 @@ namespace upload2gdc
                 }
 
 
-                if (File.Exists(Path.Combine(fileLocation, fileName)))
+                // Try the expected subdirectory first, then try the base directory
+                string fullPath = Path.Combine(fileLocation, fileName);
+                string baseDirectoryPath = Path.Combine(basePath, fileName);
+                
+                if (File.Exists(fullPath))
                 {
                     filesFound.Append(item.Value.file_name + Environment.NewLine);
                     numFilesFound++;
-                    //Console.WriteLine($"Found: {Path.Combine(fileLocation, fileName)}");
+                    //Console.WriteLine($"Found: {fullPath}");
+                }
+                else if (File.Exists(baseDirectoryPath))
+                {
+                    filesFound.Append(item.Value.file_name + Environment.NewLine);
+                    numFilesFound++;
+                    //Console.WriteLine($"Found in base directory: {baseDirectoryPath}");
                 }
                 else
                 {
                     filesNotFound.Append(item.Value.file_name + Environment.NewLine);
                     numFilesNotFound++;
-                    //Console.WriteLine($"Not found: {Path.Combine(fileLocation, fileName)}");
+                    //Console.WriteLine($"Not found: {fullPath} or {baseDirectoryPath}");
                 }
             }
 

@@ -10,7 +10,7 @@ doc: |
 
 requirements:
   DockerRequirement:
-    dockerPull: "gdc-uploader:latest"
+    dockerPull: "cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest"
   ResourceRequirement:
     ramMin: 2048
     coresMin: 2

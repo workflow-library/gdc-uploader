@@ -59,14 +59,14 @@ cwltool --outdir ./output ../cwl/metadata-generator.cwl metadata-generator-job.j
 
 ```bash
 # Build the Docker image
-docker build -t gdc-uploader .
+docker build -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
 
 # Run file check
-docker run --rm -v /local/data:/data gdc-uploader:latest \
+docker run --rm -v /local/data:/data cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest \
   /app/upload2gdc --md /data/metadata.json --files /data --filesonly
 
 # Run with simulator
-docker run --rm -v /local/data:/data gdc-uploader:latest \
+docker run --rm -v /local/data:/data cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest \
   /app/upload2gdc --ur /data/upload-report.tsv --md /data/metadata.json \
   --files /data --token /data/token.txt --sim
 ```
