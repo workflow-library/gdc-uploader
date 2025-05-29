@@ -1,5 +1,8 @@
 #!/usr/bin/env cwl-runner
 
+# ==============================================================================
+# CWL METADATA SECTION
+# ==============================================================================
 cwlVersion: v1.2
 class: CommandLineTool
 label: "GDC Uploader"
@@ -12,6 +15,9 @@ doc: |
   Last Updated: 2025-05-28
   Changes: Initial versioned release with Seven Bridges compatibility fixes
 
+# ==============================================================================
+# REQUIREMENTS SECTION
+# ==============================================================================
 requirements:
   DockerRequirement:
     dockerPull: "cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest"
@@ -19,8 +25,14 @@ requirements:
     ramMin: 2048
     coresMin: 2
 
+# ==============================================================================
+# COMMAND SECTION
+# ==============================================================================
 baseCommand: ["dotnet", "/app/upload2gdc.dll"]
 
+# ==============================================================================
+# INPUTS SECTION
+# ==============================================================================
 inputs:
   upload_report:
     type: File?
@@ -85,6 +97,9 @@ inputs:
       prefix: --sim
     doc: "Use simulator instead of the gdc data transfer tool"
 
+# ==============================================================================
+# OUTPUTS SECTION
+# ==============================================================================
 outputs:
   upload_report_output:
     type: File?
@@ -98,5 +113,8 @@ outputs:
       glob: "*.log"
     doc: "Log files from upload threads"
 
+# ==============================================================================
+# STANDARD STREAMS SECTION
+# ==============================================================================
 stdout: gdc-upload-stdout.log
 stderr: gdc-upload-stderr.log
