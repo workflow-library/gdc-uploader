@@ -8,7 +8,7 @@ This document shows how to run the GDC Uploader using cwltool with command-line 
 ```bash
 cwltool \
   --outdir ./output \
-  ../cwl/gdc-uploader.cwl \
+  ../apps/gdc_upload.cwl \
   --metadata_file /path/to/gdc-metadata.json \
   --files_directory /path/to/sequence-files \
   --token_file /path/to/gdc-token.txt \
@@ -22,7 +22,7 @@ cwltool \
 ```bash
 cwltool \
   --outdir ./output \
-  ../cwl/gdc-uploader.cwl \
+  ../apps/gdc_upload.cwl \
   --metadata_file /path/to/gdc-metadata.json \
   --files_directory /path/to/sequence-files \
   --files_only true \
@@ -33,7 +33,7 @@ cwltool \
 ```bash
 cwltool \
   --outdir ./output \
-  ../cwl/gdc-uploader.cwl \
+  ../apps/gdc_upload.cwl \
   --metadata_file /path/to/gdc-metadata.json \
   --files_directory /path/to/sequence-files \
   --token_file /path/to/gdc-token.txt \
@@ -46,7 +46,7 @@ cwltool \
 ```bash
 cwltool \
   --outdir ./output \
-  ../cwl/metadata-generator.cwl \
+  ../apps/gdc_metadata-generate.cwl \
   --upload_list /path/to/upload-list.txt \
   --experiment_type rnaseq \
   --use_dev_server false

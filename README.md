@@ -5,14 +5,13 @@ Edited by Hongwei Liu
 
 ## Overview
 
-A .NET Core console application that manages uploads of genomic sequence data files (FASTQ/BAM) to the NIH Genomic Data Commons (GDC). This tool serves as a robust wrapper for the GDC Data Transfer Tool (gdc-client) with features like multi-threaded uploads, retry logic, and comprehensive testing capabilities.
+A tool that manages uploads of genomic sequence data files (FASTQ/BAM) to the NIH Genomic Data Commons (GDC) using the GDC Data Transfer Tool (gdc-client) directly with parallel execution support.
 
 **Key Features:**
-- Multi-threaded parallel uploads with configurable thread count
+- Parallel uploads using GNU parallel with configurable thread count
 - Automatic retry mechanism for failed uploads  
-- File verification mode to check data availability before uploading
-- Simulator mode for testing upload logic without actual transfers
-- Support for TracSeq naming conventions and generic filename formats
+- Direct gdc-client integration without intermediate wrappers
+- Support for various file organization patterns
 - CWL (Common Workflow Language) integration for workflow platforms
 - Docker containerization for consistent deployment
 
@@ -22,17 +21,20 @@ A .NET Core console application that manages uploads of genomic sequence data fi
 
 ```
 gdc-uploader/
-├── src/
-│   └── upload2gdc/         # Main application
-├── cwl/                    # CWL workflow definitions
-│   ├── gdc-uploader.cwl
-│   └── metadata-generator.cwl
+├── apps/                    # OWL Apps Pattern - flat directory
+│   ├── gdc.Dockerfile      # Docker image definition
+│   ├── gdc_upload.cwl      # Main upload workflow
+│   ├── gdc_upload.sh       # Upload script
+│   ├── gdc_direct-upload.cwl    # Direct upload workflow
+│   ├── gdc_direct-upload.sh     # Direct upload script
+│   ├── gdc_metadata-generate.cwl # Metadata generation
+│   ├── gdc_yaml2json.cwl   # YAML to JSON conversion
+│   └── gdc_yaml2json.py    # YAML converter script
 ├── tests/
-│   ├── test-data/            # Test data files
-│   ├── test-cwl.sh           # CWL test script
-│   └── TEST-RESULTS.md       # Test execution results
-├── Dockerfile             # Docker image definition
-└── upload2gdc.sln        # Solution file
+│   ├── test-data/         # Test data files
+│   ├── test-cwl.sh        # CWL test script
+│   └── TEST-RESULTS.md    # Test execution results
+└── repos/                 # External repositories
 ```
 
 ## Quick Start
@@ -43,7 +45,7 @@ gdc-uploader/
 # Clone repository and build
 git clone <repository-url>
 cd gdc-uploader
-docker build -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
+docker build -f apps/gdc.Dockerfile -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
 ```
 
 ### 2. Run Tests
@@ -57,103 +59,98 @@ cd tests
 ### 3. Production Usage
 
 ```bash
-# Check files exist before uploading
-cwltool --outdir ./output cwl/gdc-uploader.cwl \
-  --upload_report /path/to/upload-report.tsv \
-  --metadata_file /path/to/metadata.json \
-  --files_directory /path/to/files \
-  --files_only
-
 # Production upload
-cwltool --outdir ./output cwl/gdc-uploader.cwl \
-  --upload_report /path/to/upload-report.tsv \
+cwltool --outdir ./output apps/gdc_upload.cwl \
   --metadata_file /path/to/metadata.json \
   --files_directory /path/to/files \
   --token_file /path/to/gdc-token.txt \
   --thread_count 4
 ```
 
-## Usage Modes
+## Usage Examples
 
-### File Verification Only
-Check if all required files exist without uploading:
+### Basic Upload
+Upload files to GDC with default settings:
 ```bash
-cwltool cwl/gdc-uploader.cwl \
+cwltool apps/gdc_upload.cwl \
   --metadata_file metadata.json \
   --files_directory /path/to/files \
-  --files_only
+  --token_file token.txt
 ```
 
-### Simulator Mode (Testing)
-Test upload logic without actual transfers:
+### Parallel Upload with Retries
+Upload with 8 parallel threads and 5 retry attempts:
 ```bash
-cwltool cwl/gdc-uploader.cwl \
-  --upload_report upload-report.tsv \
+cwltool apps/gdc_upload.cwl \
   --metadata_file metadata.json \
   --files_directory /path/to/files \
   --token_file token.txt \
-  --simulator
+  --thread_count 8 \
+  --retry_count 5
 ```
 
-### Production Upload
-Real upload to GDC:
+### Direct Script Usage
+You can also use the upload script directly without CWL:
 ```bash
-cwltool cwl/gdc-uploader.cwl \
-  --upload_report upload-report.tsv \
-  --metadata_file metadata.json \
-  --files_directory /path/to/files \
-  --token_file token.txt \
-  --thread_count 4 \
-  --retry_count 3
+./apps/gdc_upload.sh \
+  -m metadata.json \
+  -t token.txt \
+  -j 4 \
+  -r 3 \
+  /path/to/files
 ```
 
 ## File Requirements
 
 ### Input Files
-- **Upload Report** (TSV): GDC-generated file with UUIDs and metadata
-- **Metadata File** (JSON): GDC-compliant metadata for each file
-- **Sequence Files**: FASTQ/BAM files organized in expected directory structure
+- **Metadata File** (JSON): GDC-compliant metadata with file UUIDs
+- **Sequence Files**: FASTQ/BAM files 
 - **GDC Token**: Authentication token from GDC portal
 
 ### Directory Structure
-The application supports files in the expected subdirectories OR directly in the base directory:
+The tool supports flexible file organization:
 
-**Option 1 - Structured (Recommended):**
+**Option 1 - Structured:**
 ```
 files_directory/
-├── fastq/              # FASTQ files go here
+├── fastq/              # FASTQ files
 │   ├── file1.fastq.gz
 │   └── file2.fastq.gz
-└── uBam/              # BAM files organized by run ID
-    └── run_id/
-        ├── file1.bam
-        └── file2.bam
+└── uBam/              # BAM files
+    ├── file1.bam
+    └── file2.bam
 ```
 
-**Option 2 - Flat (Also Supported):**
+**Option 2 - Flat:**
 ```
 files_directory/
-├── file1.fastq.gz     # Files can be directly in base directory
+├── file1.fastq.gz     # All files in base directory
 ├── file2.fastq.gz
 ├── file1.bam
-├── file2.bam
-├── metadata.json
-└── upload-report.tsv
+└── file2.bam
 ```
+
+## Output Files
+
+The tool generates:
+- `upload-report.tsv`: Report with upload status for each file
+- `upload-*.log`: Individual log files for each file upload
+- `gdc-upload-stdout.log`: Overall process output
+- `gdc-upload-stderr.log`: Error output
 
 ## Documentation
 
 - 📖 **[Complete Usage Guide](docs/usage-diagram.md)** - Detailed workflows and command reference
 - 🧪 **[Test Data](tests/test-data/)** - Sample files for testing
 - 🐳 **[Docker Usage](docs/README.md)** - Container deployment guide
-- 📋 **[CLAUDE.md](CLAUDE.md)** - Developer reference for AI assistance
+- 📋 **[CLAUDE.md](CLAUDE.md)** - Developer reference
 
 ## Requirements
 
-- **Runtime**: .NET 5.0 or Docker
-- **Dependencies**: GDC Data Transfer Tool (gdc-client) - included in Docker image
+- **Dependencies**: 
+  - GDC Data Transfer Tool (gdc-client) - included in Docker image
+  - GNU parallel - included in Docker image
+  - jq - included in Docker image
 - **Authentication**: Valid GDC token from https://portal.gdc.cancer.gov/
-
-
 
 

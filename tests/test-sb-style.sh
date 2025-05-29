@@ -24,32 +24,27 @@ echo "Input data location: /workspaces/gdc-uploader/tests/test-data (read-only s
 echo
 
 # Absolute paths (like Seven Bridges generates)
-UPLOAD_REPORT="/workspaces/gdc-uploader/tests/test-data/upload-report.tsv"
 METADATA_FILE="/workspaces/gdc-uploader/tests/test-data/gdc-metadata.json"
 FILES_DIR="/workspaces/gdc-uploader/tests/test-data"
 TOKEN_FILE="/workspaces/gdc-uploader/tests/test-data/gdc-token.txt"
-CWL_FILE="/workspaces/gdc-uploader/cwl/gdc-uploader.cwl"
+CWL_FILE="/workspaces/gdc-uploader/apps/gdc_upload.cwl"
 
-echo "Test 1: Files-only check"
-echo "-------------------------"
+echo "Running upload test (dry run)"
+echo "-----------------------------"
+# This will test file discovery and report generation
+# Actual uploads will fail due to test token
 cwltool --enable-pull --outdir . "$CWL_FILE" \
-  --upload_report "$UPLOAD_REPORT" \
-  --metadata_file "$METADATA_FILE" \
-  --files_directory "$FILES_DIR" \
-  --files_only
-
-echo
-echo "Test 2: Simulator mode"
-echo "----------------------"
-cwltool --enable-pull --outdir . "$CWL_FILE" \
-  --upload_report "$UPLOAD_REPORT" \
   --metadata_file "$METADATA_FILE" \
   --files_directory "$FILES_DIR" \
   --token_file "$TOKEN_FILE" \
-  --simulator \
-  --thread_count 2
+  --thread_count 2 \
+  --retry_count 1 || true
 
 echo
 echo "Test completed in: $(pwd)"
 echo "Output files:"
-ls -la *.log
+ls -la *.tsv *.log 2>/dev/null || echo "No output files found"
+
+echo
+echo "Upload report content:"
+cat upload-report.tsv 2>/dev/null || echo "No upload report generated"

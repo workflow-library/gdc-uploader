@@ -49,3 +49,8 @@ outputs:
 
 stdout: metadata-generation.log
 stderr: metadata-generation-error.log
+
+# ==============================================================================
+# X-OWL SECTION  
+# ==============================================================================
+# Note: This CWL does not require x-owl metadata as it uses a dotnet application
