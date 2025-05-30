@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(pip install:*)",
+      "Bash(cwltool:*)",
+      "Bash(chmod:*)",
+      "Bash(./test-simulator.sh:*)",
+      "Bash(./test-docker-simulator.sh:*)",
+      "Bash(rm:*)",
+      "Bash(./test-cwl.sh:*)",
+      "Bash(ls:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(grep:*)",
+      "Bash(./test-sb-style.sh:*)",
+      "Bash(python3:*)",
+      "Bash(diff:*)",
+      "Bash(cat:*)",
+      "Bash(git clone:*)",
+      "Bash(cp:*)",
+      "Bash(git config:*)"
+    ],
+    "deny": []
+  },
+  "enableAllProjectMcpServers": false
+}
