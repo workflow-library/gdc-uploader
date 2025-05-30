@@ -1,50 +1,5 @@
 {
-  "name": "GDC Uploader Development",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  "features": {
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "installZsh": true,
-      "configureZshAsDefaultShell": true,
-      "installOhMyZsh": true,
-      "username": "vscode",
-      "userUid": "1000",
-      "userGid": "1000"
-    },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "moby": true,
-      "dockerDashComposeVersion": "v2"
-    },
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.11"
-    },
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "20"
-    }
-  },
   "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-azuretools.vscode-docker",
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "ms-vscode.makefile-tools",
-        "redhat.vscode-yaml",
-        "rabbitwerks.cwl-runner"
-      ],
-      "settings": {
-        "terminal.integrated.defaultProfile.linux": "zsh",
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "python.linting.enabled": true,
-        "python.linting.pylintEnabled": true,
-        "python.formatting.provider": "black",
-        "editor.formatOnSave": true,
-        "files.associations": {
-          "*.cwl": "yaml"
-        }
-      }
-    },
     "codespaces": {
       "repositories": {
         "open-workflow-library/owlkit": {
@@ -56,9 +11,5 @@
       }
     }
   },
-  "postCreateCommand": "bash -c 'sudo apt-get update && sudo apt-get install -y jq parallel && pip install --user cwltool pyyaml'",
-  "remoteUser": "vscode",
-  "mounts": [],
-  "forwardPorts": [],
-  "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}"
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code"
 }
