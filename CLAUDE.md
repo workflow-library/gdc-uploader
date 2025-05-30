@@ -50,10 +50,16 @@ gdc-uploader/
    - Falls back to recursive search if needed
    - Supports both structured and flat file organization
 
+3. **Additional Workflows**:
+   - **gdc_direct-upload.sh**: Simplified upload workflow for basic scenarios
+   - **gdc_yaml2json.py**: Converts YAML metadata to JSON format required by GDC
+   - **gdc_metadata-generate.cwl**: Generates GDC metadata from upload lists (uses TracSeq API)
+
 ### External Dependencies
 - **gdc-client**: The GDC Data Transfer Tool executable (included in Docker image)
 - **GNU parallel**: For concurrent upload management
 - **jq**: For JSON parsing
+- **Python3 + PyYAML**: For YAML to JSON conversion
 - **GDC Token**: Authentication token required for uploads
 
 ## Build and Run Commands
@@ -61,6 +67,9 @@ gdc-uploader/
 ### Docker Build
 ```bash
 docker build -f apps/gdc.Dockerfile -t gdc-uploader:latest .
+
+# Or for Seven Bridges deployment:
+docker build -f apps/gdc.Dockerfile -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
 ```
 
 ### CWL Testing
@@ -116,12 +125,28 @@ cwltool \
 ./tests/test-sb-style.sh
 ```
 
+### Test Data
+The project includes test data in `tests/test-data/`:
+- Sample FASTQ files in `fastq/` subdirectory
+- GDC metadata in both JSON and YAML formats
+- Test token file (for dry runs)
+- Expected output format (upload-report.tsv)
+
 ## VS Code Configuration
 
 - Do not auto open files in VS Code
 
-## Memories
+## Development Notes
 
-- Always run tests using cwltool
-- Create a versioning system in the cwl doc section (date + increment)
+### Versioning
+- Create a versioning system in the CWL doc section (date + increment)
+- Update version in CWL files when making changes
+
+### Key Transitions
 - The system now uses direct gdc-client calls instead of C# wrapper
+- Moved from complex application architecture to simple shell scripts
+
+### Testing Best Practices
+- Always run tests using cwltool
+- Test both local and Seven Bridges style execution
+- Verify file discovery works with different directory structures
