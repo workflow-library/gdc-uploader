@@ -1,0 +1,15 @@
+yaml_metadata:
+  class: File
+  path: /workspaces/gdc-uploader/zed/manifest.yaml
+
+# Create a dummy BAM file with the right name for testing
+target_file:
+  class: File
+  path: /workspaces/gdc-uploader/tests/test-data/fastq/210528_UNC01_0001_TEST0001_sample1.fastq.gz
+  # We'll rename this in the workflow to match metadata
+
+token_file:
+  class: File
+  path: /workspaces/gdc-uploader/tests/test-data/gdc-token.txt
+
+retry_count: 3

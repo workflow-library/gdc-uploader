@@ -4,6 +4,57 @@
 
 set -e
 
+show_help() {
+    cat << EOF
+GDC Uploader - Upload genomic files to NIH Genomic Data Commons
+
+USAGE:
+    gdc_upload.sh [OPTIONS] FILES_DIRECTORY
+
+DESCRIPTION:
+    Uploads genomic sequence files to the GDC using parallel processing.
+    Requires GDC metadata JSON and authentication token.
+    
+    This script searches for files in the directory using UUIDs from the metadata,
+    then uploads them concurrently using the GDC Data Transfer Tool.
+
+OPTIONS:
+    -m, --metadata FILE     Path to GDC metadata JSON file (required)
+    -t, --token FILE        Path to GDC authentication token file (required)
+    -j, --threads N         Number of parallel upload threads (default: 4)
+    -r, --retries N         Number of retry attempts for failed uploads (default: 3)
+    -h, --help              Show this help message
+
+EXAMPLES:
+    gdc_upload.sh -m metadata.json -t token.txt -j 8 /data/files/
+    gdc_upload.sh -m meta.json -t auth.txt -r 5 ./sequence-files/
+
+EXIT CODES:
+    0    Success - all files uploaded successfully
+    1    Error - missing required parameters or files
+    2    Error - upload failures after retries
+    3    Error - invalid metadata or authentication
+
+DEPENDENCIES:
+    - gdc-client (GDC Data Transfer Tool)
+    - GNU parallel
+    - jq (JSON processor)
+
+FILE DISCOVERY:
+    The script searches for files in these locations (in order):
+    1. FILES_DIRECTORY/fastq/
+    2. FILES_DIRECTORY/uBam/
+    3. FILES_DIRECTORY/sequence-files/
+    4. FILES_DIRECTORY/ (recursive search)
+
+OUTPUT:
+    - upload-report.tsv: Summary of all upload attempts
+    - upload-*.log: Individual upload logs for each file
+    - gdc-upload-stdout.log: Standard output
+    - gdc-upload-stderr.log: Standard error
+EOF
+}
+
 # Initialize variables
 METADATA_FILE=""
 TOKEN_FILE=""
@@ -14,19 +65,23 @@ FILES_DIR=""
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -m)
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -m|--metadata)
             METADATA_FILE="$2"
             shift 2
             ;;
-        -t)
+        -t|--token)
             TOKEN_FILE="$2"
             shift 2
             ;;
-        -j)
+        -j|--threads)
             THREADS="$2"
             shift 2
             ;;
-        -r)
+        -r|--retries)
             RETRIES="$2"
             shift 2
             ;;

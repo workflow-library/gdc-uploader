@@ -11,9 +11,9 @@ doc: |
   This tool manages uploads of genomic sequence data files to the 
   National Cancer Institute's Genomic Data Commons.
   
-  Version: 2025.05.30.3
+  Version: 2025.05.30.1
   Last Updated: 2025-05-30
-  Changes: Added comprehensive help support to sidecar script, follows OWL pattern
+  Changes: Added sbg:useSbgFS hint for optimized file system performance on Seven Bridges platforms
 
 # ==============================================================================
 # REQUIREMENTS SECTION

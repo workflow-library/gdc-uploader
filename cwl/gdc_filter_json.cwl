@@ -5,19 +5,21 @@
 # ==============================================================================
 cwlVersion: v1.2
 class: CommandLineTool
-label: "YAML to JSON Converter"
+label: "GDC JSON File Filter"
 doc: |
-  Convert YAML metadata files to JSON format for GDC uploader.
+  Filter GDC metadata JSON file by specific file_name.
   
-  This tool converts YAML-formatted metadata to the JSON format required by the GDC Data Transfer Tool.
-  Supports complex nested structures with read groups, file metadata, and project information.
-  Uses PyYAML for robust parsing of complex YAML structures.
+  This tool takes a GDC metadata JSON file and a target filename, then returns
+  a filtered JSON containing only the matching file entries. Supports both
+  exact and partial matching (case-insensitive).
   
-  For detailed usage information, run: gdc_yaml2json.py --help
+  Useful for extracting metadata for specific files from large datasets.
   
-  Version: 2025.05.30.4
+  For detailed usage information, run: gdc_filter_json.py --help
+  
+  Version: 2025.05.30.1
   Last Updated: 2025-05-30
-  Changes: Converted to sidecar script pattern, removed embedded code, enhanced help support, removed x-owl until namespace fixed
+  Changes: Initial version with comprehensive help support
 
 # ==============================================================================
 # REQUIREMENTS SECTION
@@ -33,38 +35,56 @@ hints:
 # ==============================================================================
 # COMMAND SECTION
 # ==============================================================================
-baseCommand: ["gdc_yaml2json.py"]
+baseCommand: ["gdc_filter_json.py"]
 
 # ==============================================================================
 # INPUTS SECTION
 # ==============================================================================
 inputs:
-  yaml_file:
+  json_file:
     type: File
     inputBinding:
       position: 1
-    doc: "YAML metadata file to convert"
+    doc: "GDC metadata JSON file to filter"
+  
+  target_file:
+    type: File
+    inputBinding:
+      position: 2
+      valueFrom: $(self.path)
+    doc: "Target file (basename will be extracted automatically for filtering)"
   
   output_filename:
     type: string?
-    default: "metadata.json"
+    default: "filtered_metadata.json"
     inputBinding:
-      position: 2
-    doc: "Output JSON filename (default: metadata.json)"
+      prefix: --output
+    doc: "Output filename (default: filtered_metadata.json)"
+  
+  strict_matching:
+    type: boolean?
+    inputBinding:
+      prefix: --strict
+    doc: "Use exact filename matching instead of partial matching"
+  
+  compact:
+    type: boolean?
+    inputBinding:
+      prefix: --compact
+    doc: "Compact JSON output (no indentation)"
 
 # ==============================================================================
 # OUTPUTS SECTION
 # ==============================================================================
 outputs:
-  json_file:
+  filtered_json:
     type: File
     outputBinding:
       glob: $(inputs.output_filename)
-    doc: "Converted JSON metadata file"
+    doc: "Filtered JSON file containing only matching entries"
 
 # ==============================================================================
 # MISC
 # ==============================================================================
-stdout: yaml2json-stdout.log
-stderr: yaml2json-stderr.log
-
+stdout: filter-json-stdout.log
+stderr: filter-json-stderr.log

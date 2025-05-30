@@ -70,7 +70,15 @@ docker build -f cwl/gdc.Dockerfile -t gdc-uploader:latest .
 
 # Or for Seven Bridges deployment:
 docker build -f cwl/gdc.Dockerfile -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
+
+# For Open Workflow Library deployment (preferred):
+owlkit docker build -f gdc.Dockerfile -t gdc-uploader:latest -c . --push -u open-workflow-library
 ```
+
+### Docker Registry
+- **Target Registry**: `ghcr.io/open-workflow-library/gdc-uploader:latest` (preferred)
+- **Current Temporary**: `ghcr.io/davidroberson/gdc-uploader:latest` (until org access available)
+- **Note**: Requires GitHub token with write access to open-workflow-library organization
 
 ### CWL Testing
 ```bash

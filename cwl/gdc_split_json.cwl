@@ -5,19 +5,21 @@
 # ==============================================================================
 cwlVersion: v1.2
 class: CommandLineTool
-label: "YAML to JSON Converter"
+label: "GDC JSON File Splitter"
 doc: |
-  Convert YAML metadata files to JSON format for GDC uploader.
+  Split GDC metadata JSON file by file_name into individual JSON files.
   
-  This tool converts YAML-formatted metadata to the JSON format required by the GDC Data Transfer Tool.
-  Supports complex nested structures with read groups, file metadata, and project information.
-  Uses PyYAML for robust parsing of complex YAML structures.
+  This tool takes a GDC metadata JSON file containing multiple files and creates
+  separate JSON files for each file_name entry. Each output file maintains the
+  same structure as the original but contains only one file entry.
   
-  For detailed usage information, run: gdc_yaml2json.py --help
+  Useful for per-file processing, upload tracking, or workflow distribution.
   
-  Version: 2025.05.30.4
+  For detailed usage information, run: gdc_split_json.py --help
+  
+  Version: 2025.05.30.1
   Last Updated: 2025-05-30
-  Changes: Converted to sidecar script pattern, removed embedded code, enhanced help support, removed x-owl until namespace fixed
+  Changes: Initial version with comprehensive help support
 
 # ==============================================================================
 # REQUIREMENTS SECTION
@@ -26,45 +28,51 @@ requirements:
   DockerRequirement:
     dockerPull: "ghcr.io/open-workflow-library/gdc-uploader:latest"
 
-hints:
-  - class: 'sbg:useSbgFS'
-    value: 'true'
-
 # ==============================================================================
 # COMMAND SECTION
 # ==============================================================================
-baseCommand: ["gdc_yaml2json.py"]
+baseCommand: ["gdc_split_json.py"]
 
 # ==============================================================================
 # INPUTS SECTION
 # ==============================================================================
 inputs:
-  yaml_file:
+  json_file:
     type: File
     inputBinding:
       position: 1
-    doc: "YAML metadata file to convert"
+    doc: "GDC metadata JSON file to split"
   
-  output_filename:
+  prefix:
     type: string?
-    default: "metadata.json"
     inputBinding:
-      position: 2
-    doc: "Output JSON filename (default: metadata.json)"
+      prefix: --prefix
+    doc: "Prefix for output filenames"
+  
+  suffix:
+    type: string?
+    inputBinding:
+      prefix: --suffix
+    doc: "Suffix for output filenames (before .json extension)"
+  
+  compact:
+    type: boolean?
+    inputBinding:
+      prefix: --compact
+    doc: "Compact JSON output (no indentation)"
 
 # ==============================================================================
 # OUTPUTS SECTION
 # ==============================================================================
 outputs:
-  json_file:
-    type: File
+  split_files:
+    type: File[]
     outputBinding:
-      glob: $(inputs.output_filename)
-    doc: "Converted JSON metadata file"
+      glob: "*.json"
+    doc: "Individual JSON files, one per file_name in the input"
 
 # ==============================================================================
 # MISC
 # ==============================================================================
-stdout: yaml2json-stdout.log
-stderr: yaml2json-stderr.log
-
+stdout: split-json-stdout.log
+stderr: split-json-stderr.log
