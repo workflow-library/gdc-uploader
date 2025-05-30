@@ -1,25 +1,17 @@
 #!/usr/bin/env cwl-runner
 
-# ==============================================================================
-# CWL METADATA SECTION
-# ==============================================================================
 cwlVersion: v1.2
 class: CommandLineTool
-label: "YAML to JSON Converter"
+label: "Simple YAML to JSON Converter"
 doc: |
   Convert YAML metadata files to JSON format for GDC uploader.
-  This tool converts YAML-formatted metadata to the JSON format required by the GDC Data Transfer Tool.
-  Supports basic YAML list structures with key-value pairs.
+  Uses a simple built-in parser for basic YAML structures.
   
   Version: 2025.05.29.2
-  Last Updated: 2025-05-29
 
-# ==============================================================================
-# REQUIREMENTS SECTION
-# ==============================================================================
+baseCommand: ["gdc_yaml2json.py"]
+
 requirements:
-  DockerRequirement:
-    dockerPull: "cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest"
   InitialWorkDirRequirement:
     listing:
       - entryname: yaml2json.py
@@ -73,14 +65,6 @@ requirements:
           with open('metadata.json', 'w') as f:
               json.dump(data, f, indent=2)
 
-# ==============================================================================
-# COMMAND SECTION
-# ==============================================================================
-baseCommand: ["gdc_yaml2json.py"]
-
-# ==============================================================================
-# INPUTS SECTION
-# ==============================================================================
 inputs:
   yaml_file:
     type: File
@@ -88,9 +72,6 @@ inputs:
       position: 1
     doc: "YAML metadata file to convert"
 
-# ==============================================================================
-# OUTPUTS SECTION
-# ==============================================================================
 outputs:
   json_file:
     type: File
@@ -98,15 +79,3 @@ outputs:
       glob: metadata.json
     doc: "Converted JSON metadata file"
 
-# ==============================================================================
-# MISC
-# ==============================================================================
-stdout: yaml2json-stdout.log
-stderr: yaml2json-stderr.log
-
-# ==============================================================================
-# X-OWL SECTION
-# ==============================================================================
-x-owl:
-  dockerfile: gdc.Dockerfile
-  script: gdc_yaml2json.py

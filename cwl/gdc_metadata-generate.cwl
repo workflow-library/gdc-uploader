@@ -9,7 +9,7 @@ doc: |
 
 requirements:
   DockerRequirement:
-    dockerPull: "cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest"
+    dockerPull: "ghcr.io/open-workflow-library/gdc-uploader:latest"
   ResourceRequirement:
     ramMin: 1024
     coresMin: 1

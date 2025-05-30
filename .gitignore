@@ -266,5 +266,8 @@ __pycache__/
 # Seven Bridges style test task directories
 tests/tasks/
 
+# Test output directories
+tests/test-output/
+
 # Repos directory
 zed/

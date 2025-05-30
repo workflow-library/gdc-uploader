@@ -1,4 +1,0 @@
-id	related_case	entity_type	entity_id	entity_submitter_id	file_size	file_md5
-550e8400-e29b-41d4-a716-446655440001	case1	submitted_unaligned_reads	entity1	sample_001	124	098f6bcd4621d373cade4e832627b4f6
-550e8400-e29b-41d4-a716-446655440002	case1	submitted_unaligned_reads	entity2	sample_002	124	5d41402abc4b2a76b9719d911017c592
-550e8400-e29b-41d4-a716-446655440003	case2	submitted_unaligned_reads	entity3	sample_003	124	7d793037a0760186574b0282f2f435e7

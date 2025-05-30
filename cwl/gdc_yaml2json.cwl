@@ -1,17 +1,25 @@
 #!/usr/bin/env cwl-runner
 
+# ==============================================================================
+# CWL METADATA SECTION
+# ==============================================================================
 cwlVersion: v1.2
 class: CommandLineTool
-label: "Simple YAML to JSON Converter"
+label: "YAML to JSON Converter"
 doc: |
   Convert YAML metadata files to JSON format for GDC uploader.
-  Uses a simple built-in parser for basic YAML structures.
+  This tool converts YAML-formatted metadata to the JSON format required by the GDC Data Transfer Tool.
+  Supports basic YAML list structures with key-value pairs.
   
   Version: 2025.05.29.2
+  Last Updated: 2025-05-29
 
-baseCommand: ["gdc_yaml2json.py"]
-
+# ==============================================================================
+# REQUIREMENTS SECTION
+# ==============================================================================
 requirements:
+  DockerRequirement:
+    dockerPull: "ghcr.io/open-workflow-library/gdc-uploader:latest"
   InitialWorkDirRequirement:
     listing:
       - entryname: yaml2json.py
@@ -65,6 +73,14 @@ requirements:
           with open('metadata.json', 'w') as f:
               json.dump(data, f, indent=2)
 
+# ==============================================================================
+# COMMAND SECTION
+# ==============================================================================
+baseCommand: ["gdc_yaml2json.py"]
+
+# ==============================================================================
+# INPUTS SECTION
+# ==============================================================================
 inputs:
   yaml_file:
     type: File
@@ -72,6 +88,9 @@ inputs:
       position: 1
     doc: "YAML metadata file to convert"
 
+# ==============================================================================
+# OUTPUTS SECTION
+# ==============================================================================
 outputs:
   json_file:
     type: File
@@ -80,8 +99,8 @@ outputs:
     doc: "Converted JSON metadata file"
 
 # ==============================================================================
-# X-OWL SECTION
+# MISC
 # ==============================================================================
-x-owl:
-  dockerfile: gdc--.Dockerfile
-  script: gdc_yaml2json.py
+stdout: yaml2json-stdout.log
+stderr: yaml2json-stderr.log
+

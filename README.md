@@ -21,7 +21,7 @@ A tool that manages uploads of genomic sequence data files (FASTQ/BAM) to the NI
 
 ```
 gdc-uploader/
-├── apps/                    # OWL Apps Pattern - flat directory
+├── cwl/                    # OWL Apps Pattern - flat directory
 │   ├── gdc.Dockerfile      # Docker image definition
 │   ├── gdc_upload.cwl      # Main upload workflow
 │   ├── gdc_upload.sh       # Upload script
@@ -45,7 +45,7 @@ gdc-uploader/
 # Clone repository and build
 git clone <repository-url>
 cd gdc-uploader
-docker build -f apps/gdc.Dockerfile -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
+docker build -f cwl/gdc.Dockerfile -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
 ```
 
 ### 2. Run Tests
@@ -53,14 +53,14 @@ docker build -f apps/gdc.Dockerfile -t cgc-images.sbgenomics.com/david.roberson/
 ```bash
 # Verify everything works with included test data
 cd tests
-./test-cwl.sh
+./scripts/test-cwl.sh
 ```
 
 ### 3. Production Usage
 
 ```bash
 # Production upload
-cwltool --outdir ./output apps/gdc_upload.cwl \
+cwltool --outdir ./output cwl/gdc_upload.cwl \
   --metadata_file /path/to/metadata.json \
   --files_directory /path/to/files \
   --token_file /path/to/gdc-token.txt \
@@ -72,7 +72,7 @@ cwltool --outdir ./output apps/gdc_upload.cwl \
 ### Basic Upload
 Upload files to GDC with default settings:
 ```bash
-cwltool apps/gdc_upload.cwl \
+cwltool cwl/gdc_upload.cwl \
   --metadata_file metadata.json \
   --files_directory /path/to/files \
   --token_file token.txt
@@ -81,7 +81,7 @@ cwltool apps/gdc_upload.cwl \
 ### Parallel Upload with Retries
 Upload with 8 parallel threads and 5 retry attempts:
 ```bash
-cwltool apps/gdc_upload.cwl \
+cwltool cwl/gdc_upload.cwl \
   --metadata_file metadata.json \
   --files_directory /path/to/files \
   --token_file token.txt \
@@ -92,7 +92,7 @@ cwltool apps/gdc_upload.cwl \
 ### Direct Script Usage
 You can also use the upload script directly without CWL:
 ```bash
-./apps/gdc_upload.sh \
+./cwl/gdc_upload.sh \
   -m metadata.json \
   -t token.txt \
   -j 4 \

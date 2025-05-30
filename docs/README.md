@@ -1,81 +1,54 @@
-# GDC Uploader Examples
+# GDC Uploader Documentation
 
-This directory contains example configuration files for running the GDC uploader with CWL.
+Welcome to the GDC Uploader documentation. This tool manages uploads of genomic sequence data files to the NIH Genomic Data Commons.
 
-## Files
+## Documentation Structure
 
-### Job Configuration Files
+### 📘 [Usage Guide](usage/)
+- [CWL Commands Reference](usage/cwl-commands.md) - Complete command-line reference
 
-- **gdc-upload-job.yml** / **gdc-upload-job.json** - Example job configurations for uploading files to GDC
-- **metadata-generator-job.yml** / **metadata-generator-job.json** - Example job configurations for generating GDC metadata
+### 🔧 [Technical Documentation](technical/)
+- [Architecture Overview](technical/architecture.md) - System design and components
 
-### Sample Data Files
+### 🧪 [Testing Documentation](testing/)
+- [Test Report](testing/test-report.md) - Comprehensive testing results and methodology
 
-- **sample-gdc-metadata.json** - Example GDC metadata file format
-- **sample-upload-list.txt** - Example upload list for metadata generation
+## Quick Links
 
-## Usage
+- **Main README**: [../README.md](../README.md) - Project overview and quick start
+- **Developer Guide**: [../CLAUDE.md](../CLAUDE.md) - Development guidelines and conventions
+- **Test Scripts**: [../tests/scripts/](../tests/scripts/) - Automated test scripts
 
-### Running with YAML configuration
+## Common Tasks
 
+### Upload Files to GDC
 ```bash
-# Upload files
-cwltool --outdir ./output ../cwl/gdc-uploader.cwl gdc-upload-job.yml
-
-# Generate metadata
-cwltool --outdir ./output ../cwl/metadata-generator.cwl metadata-generator-job.yml
+cwltool cwl/gdc_upload.cwl \
+  --metadata_file metadata.json \
+  --files_directory /path/to/files \
+  --token_file token.txt
 ```
 
-### Running with JSON configuration
-
+### Run Tests
 ```bash
-# Upload files
-cwltool --outdir ./output ../cwl/gdc-uploader.cwl gdc-upload-job.json
-
-# Generate metadata
-cwltool --outdir ./output ../cwl/metadata-generator.cwl metadata-generator-job.json
+./tests/scripts/test-cwl.sh
 ```
 
-## Key Features
-
-### Testing and Validation
-- **File Check Mode** (`--files_only`): Verify all files exist without uploading
-- **Simulator Mode** (`--simulator`): Test upload logic without actual transfers
-- **Built-in Test Data**: Complete test dataset included for immediate testing
-
-### Robust Upload Management
-- **Multi-threaded uploads**: Configurable thread count for parallel transfers
-- **Retry logic**: Automatic retry of failed uploads with configurable retry count
-- **Progress tracking**: Real-time progress reporting and logging
-- **Resume capability**: Can resume interrupted uploads
-
-### File Format Support
-- **FASTQ files**: Stored in `fastq/` subdirectory
-- **BAM files**: Stored in `uBam/run_id/` structure
-- **TracSeq naming convention**: Automatic parsing of TracSeq format filenames
-- **Generic filename support**: Handles non-TracSeq format files gracefully
-
-## Docker Usage
-
+### Build Docker Image
 ```bash
-# Build the Docker image
-docker build -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
-
-# Run file check
-docker run --rm -v /local/data:/data cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest \
-  /app/upload2gdc --md /data/metadata.json --files /data --filesonly
-
-# Run with simulator
-docker run --rm -v /local/data:/data cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest \
-  /app/upload2gdc --ur /data/upload-report.tsv --md /data/metadata.json \
-  --files /data --token /data/token.txt --sim
+cd cwl && docker build -f gdc.Dockerfile -t gdc-uploader:latest .
 ```
 
-## Important Notes
+## Getting Help
 
-- **Upload Report Required**: Most modes require a TSV upload report from GDC except `--filesonly` mode
-- **File Organization**: Files must be organized in expected directory structure (fastq/, uBam/)
-- **Token Security**: Never commit GDC tokens to version control
-- **Test First**: Always test with `--filesonly` or `--simulator` before production uploads
+- Check the [CWL Commands Reference](usage/cwl-commands.md) for detailed parameter descriptions
+- Review the [Architecture Overview](technical/architecture.md) for system understanding
+- See the [Test Report](testing/test-report.md) for known issues and limitations
 
-For detailed command reference and workflow diagrams, see **usage-diagram.md**.
+## Contributing
+
+When updating documentation:
+1. Keep examples current with the codebase
+2. Test all command examples
+3. Update version numbers when applicable
+4. Follow the existing documentation style

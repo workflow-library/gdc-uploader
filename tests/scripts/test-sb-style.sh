@@ -6,10 +6,11 @@
 
 set -e
 
-# Find next task number
-TASK_NUM=$(find tasks -name "task_*" 2>/dev/null | wc -l)
+# Find next task number in test-output directory
+BASE_OUTPUT_DIR="/workspaces/gdc-uploader/tests/test-output"
+TASK_NUM=$(find $BASE_OUTPUT_DIR -maxdepth 1 -name "task_*" -type d 2>/dev/null | wc -l)
 TASK_NUM=$((TASK_NUM + 1))
-TASK_DIR="tasks/task_$(printf "%03d" $TASK_NUM)"
+TASK_DIR="$BASE_OUTPUT_DIR/task_$(printf "%03d" $TASK_NUM)"
 
 echo "========================================"
 echo "Seven Bridges Style CWL Test - Task $TASK_NUM"
@@ -27,18 +28,25 @@ echo
 METADATA_FILE="/workspaces/gdc-uploader/tests/test-data/gdc-metadata.json"
 FILES_DIR="/workspaces/gdc-uploader/tests/test-data"
 TOKEN_FILE="/workspaces/gdc-uploader/tests/test-data/gdc-token.txt"
-CWL_FILE="/workspaces/gdc-uploader/apps/gdc_upload.cwl"
+CWL_FILE="/workspaces/gdc-uploader/cwl/gdc_upload.cwl"
 
-echo "Running upload test (dry run)"
+echo "Step 1: Validate CWL workflow"
 echo "-----------------------------"
+owlkit cwl validate "$CWL_FILE"
+
+echo
+echo "Step 2: Running upload test (dry run)"
+echo "------------------------------------"
 # This will test file discovery and report generation
 # Actual uploads will fail due to test token
-cwltool --enable-pull --outdir . "$CWL_FILE" \
-  --metadata_file "$METADATA_FILE" \
-  --files_directory "$FILES_DIR" \
-  --token_file "$TOKEN_FILE" \
-  --thread_count 2 \
-  --retry_count 1 || true
+owlkit cwl run "$CWL_FILE" \
+  --metadata-file "$METADATA_FILE" \
+  --files-directory "$FILES_DIR" \
+  --token-file "$TOKEN_FILE" \
+  --thread-count 2 \
+  --retry-count 1 \
+  --output-dir . \
+  --strict-limits || true
 
 echo
 echo "Test completed in: $(pwd)"

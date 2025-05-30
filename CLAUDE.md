@@ -12,7 +12,7 @@ Follows the OWL (Open Workflow Library) Apps Folder Pattern with flat structure.
 
 ```
 gdc-uploader/
-├── apps/                    # All CWL, Docker, and scripts (flat)
+├── cwl/                    # All CWL, Docker, and scripts (flat)
 │   ├── gdc.Dockerfile      # Docker image definition
 │   ├── gdc_upload.cwl      # Main upload workflow
 │   ├── gdc_upload.sh       # Main upload script
@@ -66,10 +66,10 @@ gdc-uploader/
 
 ### Docker Build
 ```bash
-docker build -f apps/gdc.Dockerfile -t gdc-uploader:latest .
+docker build -f cwl/gdc.Dockerfile -t gdc-uploader:latest .
 
 # Or for Seven Bridges deployment:
-docker build -f apps/gdc.Dockerfile -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
+docker build -f cwl/gdc.Dockerfile -t cgc-images.sbgenomics.com/david.roberson/gdc-utils:latest .
 ```
 
 ### CWL Testing
@@ -80,7 +80,7 @@ cd tests
 
 ### Direct Script Usage
 ```bash
-./apps/gdc_upload.sh \
+./cwl/gdc_upload.sh \
   -m metadata.json \
   -t token.txt \
   -j 4 \
@@ -92,7 +92,7 @@ cd tests
 ```bash
 cwltool \
   --outdir ./output \
-  apps/gdc_upload.cwl \
+  cwl/gdc_upload.cwl \
   --metadata_file /path/to/gdc-metadata.json \
   --files_directory /path/to/sequence-files \
   --token_file /path/to/gdc-token.txt \
@@ -115,14 +115,25 @@ cwltool \
 
 ## Testing
 
-### Standard Local Testing
+### Test Directory Management
+Tests use task-numbered directories to organize outputs:
+- Each test run creates a new `task_XXX` directory under `tests/test-output/`
+- Task numbers auto-increment (task_001, task_002, etc.)
+- Old test directories are automatically cleaned up (keeps last 10 runs)
+- This prevents test output conflicts and maintains history
+
+### Standard Local Testing (using OWLKit)
 ```bash
-./tests/test-cwl.sh
+./tests/scripts/test-cwl.sh
+# Output will be in: tests/test-output/task_XXX/
+# Now uses: owlkit cwl run and owlkit cwl validate
 ```
 
-### Seven Bridges Style Testing
+### Seven Bridges Style Testing (using OWLKit)
 ```bash
-./tests/test-sb-style.sh
+./tests/scripts/test-sb-style.sh
+# Output will be in: tests/test-output/task_XXX/
+# Now uses: owlkit cwl run with --strict-limits
 ```
 
 ### Test Data
@@ -131,6 +142,18 @@ The project includes test data in `tests/test-data/`:
 - GDC metadata in both JSON and YAML formats
 - Test token file (for dry runs)
 - Expected output format (upload-report.tsv)
+
+### Running Tests with Docker
+```bash
+# Build local test image
+cd cwl && docker build -f gdc.Dockerfile -t gdc-uploader:test .
+
+# Update CWL to use test image
+# Edit cwl/gdc_upload.cwl: dockerPull: "gdc-uploader:test"
+
+# Run tests
+cd tests && ./scripts/test-cwl.sh
+```
 
 ## VS Code Configuration
 
