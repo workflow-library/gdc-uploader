@@ -5,11 +5,11 @@
         "open-workflow-library/owlkit": {
           "permissions": "write-all"
         },
-        "open-workflow-library/owl-docs": {
+        "open-workflow-library/owlstacks": {
           "permissions": "write-all"
         }
       }
     }
   },
-  "postCreateCommand": "npm install -g @anthropic-ai/claude-code"
+  "postCreateCommand": "mkdir -p zed && git clone https://github.com/open-workflow-library/owlkit.git zed/owlkit && git clone https://github.com/open-workflow-library/owlstacks.git zed/owlstacks && npm install -g @anthropic-ai/claude-code"
 }
