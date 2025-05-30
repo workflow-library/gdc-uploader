@@ -265,3 +265,6 @@ __pycache__/
 
 # Seven Bridges style test task directories
 tests/tasks/
+
+# Repos directory
+repos/
