@@ -147,7 +147,7 @@ upload_file() {
         # Run gdc-client from the file's directory
         # Note: Log files are written to the original working directory (CWL output dir)
         local orig_pwd="$PWD"
-        (cd "$file_dir" && gdc-client upload -t "$token_file" --path . "$uuid" --log-file "$orig_pwd/upload-$uuid.log" 2>&1)
+        (cd "$file_dir" && gdc-client upload -t "$token_file" --path . "$uuid" --log-file "$orig_pwd/upload-$uuid.log" --upload-part-size 1073741824 -n 8 --resume 2>&1)
         
         if [ $? -eq 0 ]; then
             echo "[$(date)] Success: $filename"

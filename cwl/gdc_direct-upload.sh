@@ -52,7 +52,7 @@ upload_file() {
     local file_dir=$(dirname "$filename")
     local file_base=$(basename "$filename")
     
-    (cd "$file_dir" && gdc-client upload -t "$token_file" "$uuid" --log-file "upload-$uuid.log")
+    (cd "$file_dir" && gdc-client upload -t "$token_file" "$uuid" --log-file "upload-$uuid.log" --upload-part-size 1073741824 -n 8 --resume)
     
     if [ $? -eq 0 ]; then
         echo "[$(date)] Success: $filename"

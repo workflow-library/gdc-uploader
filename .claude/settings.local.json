@@ -44,7 +44,8 @@
       "Bash(owlkit push:*)",
       "Bash(owlkit deploy:*)",
       "Bash(owlkit:*)",
-      "Bash(docker push:*)"
+      "Bash(docker push:*)",
+      "Bash(git tag:*)"
     ],
     "deny": []
   },

@@ -40,18 +40,21 @@ def filter_json_by_filename(input_file, target_filename, output_file=None, prett
         # Read JSON file
         data = json.load(json_input)
         
-        # Validate structure
-        if not isinstance(data, dict):
-            print("Error: JSON data must be an object", file=sys.stderr)
-            return False
-        
-        if 'files' not in data:
-            print("Error: No 'files' array found in JSON", file=sys.stderr)
-            return False
-        
-        files_array = data['files']
-        if not isinstance(files_array, list):
-            print("Error: 'files' must be an array", file=sys.stderr)
+        # Handle both array and object formats
+        if isinstance(data, list):
+            # Direct array format
+            files_array = data
+        elif isinstance(data, dict):
+            # Object with 'files' property
+            if 'files' not in data:
+                print("Error: No 'files' array found in JSON object", file=sys.stderr)
+                return False
+            files_array = data['files']
+            if not isinstance(files_array, list):
+                print("Error: 'files' must be an array", file=sys.stderr)
+                return False
+        else:
+            print("Error: JSON data must be an array or object", file=sys.stderr)
             return False
         
         print(f"Searching {len(files_array)} files from {input_name} for: {target_filename}")
@@ -88,18 +91,23 @@ def filter_json_by_filename(input_file, target_filename, output_file=None, prett
                 print("Try using --strict for exact matching", file=sys.stderr)
             return False
         
-        # Create filtered JSON structure
-        filtered_data = {
-            'files': matching_files
-        }
-        
-        # Add metadata about the filter
-        filtered_data['_filter_info'] = {
-            'target_filename': target_filename,
-            'original_count': len(files_array),
-            'filtered_count': len(matching_files),
-            'match_type': 'exact' if strict else 'partial'
-        }
+        # Create filtered JSON structure matching input format
+        if isinstance(data, list):
+            # If input was array, output as array
+            filtered_data = matching_files
+        else:
+            # If input was object, output as object
+            filtered_data = {
+                'files': matching_files
+            }
+            
+            # Add metadata about the filter
+            filtered_data['_filter_info'] = {
+                'target_filename': target_filename,
+                'original_count': len(files_array),
+                'filtered_count': len(matching_files),
+                'match_type': 'exact' if strict else 'partial'
+            }
         
         # Write output
         if output_file == '-':

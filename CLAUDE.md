@@ -76,8 +76,8 @@ owlkit docker build -f gdc.Dockerfile -t gdc-uploader:latest -c . --push -u open
 ```
 
 ### Docker Registry
-- **Target Registry**: `ghcr.io/open-workflow-library/gdc-uploader:latest` (preferred)
-- **Current Temporary**: `ghcr.io/davidroberson/gdc-uploader:latest` (until org access available)
+- **Target Registry**: `ghcr.io/open-workflow-library/gdc-uploader:latest` (ALWAYS USE THIS)
+- **IMPORTANT**: NEVER use davidroberson for pushing Docker images - always use open-workflow-library
 - **Note**: Requires GitHub token with write access to open-workflow-library organization
 
 ### CWL Testing

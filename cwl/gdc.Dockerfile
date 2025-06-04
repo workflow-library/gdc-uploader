@@ -24,7 +24,7 @@ RUN wget https://gdc.cancer.gov/files/public/file/gdc-client_v1.6.1_Ubuntu_x64.z
     rm /tmp/gdc-client.zip
 
 # Copy all scripts from cwl directory
-COPY gdc_upload.sh gdc_direct-upload.sh gdc_yaml2json.py gdc_filter_json.py gdc_split_json.py gdc_upload_single.sh /app/scripts/
+COPY cwl/gdc_upload.sh cwl/gdc_direct-upload.sh cwl/gdc_yaml2json.py cwl/gdc_filter_json.py cwl/gdc_split_json.py cwl/gdc_upload_single.sh /app/scripts/
 RUN chmod +x /app/scripts/*.sh /app/scripts/*.py
 
 # Create directories for data and logs
