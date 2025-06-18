@@ -1,165 +1,261 @@
-# Agent 4: CLI Modernizer
+# Agent 6: API Client Developer
 
-You are Agent 4, responsible for simplifying and modernizing the command-line interface using Click best practices.
+You are Agent 6, responsible for creating a proper HTTP API client abstraction for all GDC API interactions.
 
 ## Your Mission
 
-Refactor the CLI to eliminate duplication, improve user experience, and make the codebase more maintainable. The current `cli.py` has 402 lines with significant option duplication across 9 commands.
+Extract and consolidate all HTTP/API interactions into a well-designed, reusable client library. Currently, API calls are scattered throughout the codebase with inconsistent error handling and no proper abstraction.
 
 ## Context
 
-Current CLI issues:
-- Option definitions repeated across all commands
-- No use of Click's advanced features (groups, contexts, callbacks)
-- Inconsistent validation and error handling
-- Missing features like command aliases and rich output
+Current API usage issues:
+- Direct `requests` calls scattered in multiple files
+- No consistent error handling or retry logic
+- No rate limiting implementation
+- Session management is ad-hoc
+- No connection pooling for performance
 
 ## Your Tasks
 
-1. **Create `src/gdc_uploader/cli/options.py`**
-   - Extract all common CLI options into reusable decorators
-   - Create option groups (auth options, upload options, output options)
-   - Implement shared validators and callbacks
-   - Use Click's `click.option` decorator composition
+1. **Create `src/gdc_uploader/api/client.py`**
+   - Design a clean API client class
+   - Wrap all GDC API endpoints
+   - Implement proper session management
+   - Add rate limiting to respect API limits
+   - Include comprehensive error handling
+   - Support both synchronous and async operations
 
-2. **Refactor `cli.py`**
-   - Implement Click command groups for better organization
-   - Use option inheritance to eliminate duplication
-   - Add proper context passing between commands
-   - Implement command chaining where appropriate
+2. **Create `src/gdc_uploader/api/models.py`**
+   - Define Pydantic models for API requests/responses
+   - Add validation for API data
+   - Create type-safe interfaces
+   - Document all model fields
 
-3. **Implement Command Aliases**
-   - Add short aliases for common commands
-   - Ensure backward compatibility with existing scripts
-   - Document all aliases clearly
+3. **Implement Authentication Management**
+   - Secure token handling
+   - Token validation and refresh
+   - Support multiple authentication methods
+   - Handle token expiration gracefully
 
-4. **Add Rich Terminal Output**
-   - Integrate the `rich` library for better formatting
-   - Add colored output for different message types
-   - Implement progress bars and tables
-   - Make output responsive to terminal capabilities
+4. **Add Connection Pooling**
+   - Implement connection reuse for performance
+   - Configure pool size and timeouts
+   - Add connection health checks
+   - Support concurrent requests
 
-5. **Create `src/gdc_uploader/cli/validators.py`**
-   - Centralize all input validation logic
-   - Create custom Click parameter types
-   - Add helpful error messages with suggestions
+## Current API Usage to Consolidate
 
-## Current Duplication Example
-
+From `parallel_api_upload.py`:
 ```python
-# Current: Same options repeated in every command
-@click.command()
-@click.option('--metadata-file', '-m', required=True, type=click.Path(exists=True))
-@click.option('--token-file', '-t', required=True, type=click.Path(exists=True))
-@click.option('--thread-count', '-j', type=int, default=8)
-@click.option('--upload-mode', type=click.Choice(['serial', 'parallel']))
-def upload_command(...):
-    pass
-
-@click.command()
-@click.option('--metadata-file', '-m', required=True, type=click.Path(exists=True))
-@click.option('--token-file', '-t', required=True, type=click.Path(exists=True))
-@click.option('--thread-count', '-j', type=int, default=8)
-@click.option('--upload-mode', type=click.Choice(['serial', 'parallel']))
-def api_upload_command(...):
-    pass
+# Current: Direct API calls scattered in code
+headers = {
+    'X-Auth-Token': token,
+    'Content-Type': 'application/octet-stream',
+    'Content-Length': str(chunk_size)
+}
+response = session.put(url, headers=headers, data=chunk)
+response.raise_for_status()
 ```
 
-## Refactored Structure
+## Target API Client Design
 
 ```python
-# src/gdc_uploader/cli/options.py
-import click
-from functools import wraps
+# src/gdc_uploader/api/client.py
+from typing import Optional, Dict, Any, BinaryIO
+from requests import Session
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+import time
 
-def common_options(f):
-    """Decorator for common options across commands."""
-    @click.option('--metadata-file', '-m', required=True, 
-                  type=click.Path(exists=True), help='GDC metadata file')
-    @click.option('--token-file', '-t', required=True,
-                  type=click.Path(exists=True), help='GDC token file')
-    @click.option('--thread-count', '-j', type=int, default=8,
-                  help='Number of parallel threads')
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        return f(*args, **kwargs)
-    return wrapper
-
-# cli.py - refactored
-from gdc_uploader.cli.options import common_options
-
-@cli.group()
-@click.pass_context
-def upload(ctx):
-    """Upload commands for different strategies."""
-    pass
-
-@upload.command()
-@common_options
-@click.pass_context
-def standard(ctx, metadata_file, token_file, thread_count):
-    """Standard parallel upload using gdc-client."""
-    pass
-```
-
-## Rich Output Examples
-
-```python
-from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.table import Table
-
-console = Console()
-
-def display_upload_summary(results):
-    table = Table(title="Upload Summary")
-    table.add_column("File", style="cyan")
-    table.add_column("Status", style="green")
-    table.add_column("Time", style="yellow")
+class GDCAPIClient:
+    """Client for interacting with the GDC API."""
     
-    for result in results:
-        table.add_row(result.file, result.status, result.time)
+    def __init__(
+        self,
+        token: str,
+        base_url: str = "https://api.gdc.cancer.gov",
+        max_retries: int = 3,
+        rate_limit: float = 10.0,  # requests per second
+        pool_connections: int = 10,
+        pool_maxsize: int = 20
+    ):
+        self.token = token
+        self.base_url = base_url
+        self.rate_limit = rate_limit
+        self._last_request_time = 0
+        
+        # Configure session with connection pooling
+        self.session = Session()
+        adapter = HTTPAdapter(
+            pool_connections=pool_connections,
+            pool_maxsize=pool_maxsize,
+            max_retries=Retry(
+                total=max_retries,
+                backoff_factor=0.5,
+                status_forcelist=[429, 500, 502, 503, 504]
+            )
+        )
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+        
+        # Set default headers
+        self.session.headers.update({
+            'X-Auth-Token': self.token,
+            'User-Agent': 'gdc-uploader/2.0'
+        })
     
-    console.print(table)
+    def upload_file_chunk(
+        self,
+        file_id: str,
+        chunk: BinaryIO,
+        chunk_size: int,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        """Upload a file chunk to GDC."""
+        self._rate_limit()
+        
+        url = f"{self.base_url}/files/{file_id}"
+        headers = {
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': str(chunk_size),
+            'Content-Range': f'bytes {offset}-{offset + chunk_size - 1}/*'
+        }
+        
+        response = self.session.put(url, headers=headers, data=chunk)
+        response.raise_for_status()
+        return response.json()
+    
+    def _rate_limit(self):
+        """Implement rate limiting."""
+        current_time = time.time()
+        time_since_last = current_time - self._last_request_time
+        min_interval = 1.0 / self.rate_limit
+        
+        if time_since_last < min_interval:
+            time.sleep(min_interval - time_since_last)
+        
+        self._last_request_time = time.time()
 ```
 
-## Command Structure Design
+## API Models Design
 
+```python
+# src/gdc_uploader/api/models.py
+from pydantic import BaseModel, Field, validator
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+
+class FileUploadRequest(BaseModel):
+    """Request model for file upload."""
+    file_id: str = Field(..., description="GDC file UUID")
+    file_size: int = Field(..., gt=0, description="File size in bytes")
+    md5sum: Optional[str] = Field(None, regex="^[a-f0-9]{32}$")
+    
+    @validator('file_id')
+    def validate_uuid(cls, v):
+        # UUID validation logic
+        return v
+
+class FileUploadResponse(BaseModel):
+    """Response model for file upload."""
+    file_id: str
+    status: str
+    uploaded_size: int
+    timestamp: datetime
+    warnings: List[str] = []
+
+class GDCError(BaseModel):
+    """Error response from GDC API."""
+    error_type: str
+    message: str
+    code: int
+    details: Optional[Dict[str, Any]] = None
 ```
-gdc-uploader
-├── upload
-│   ├── standard      # Current upload.py
-│   ├── api          # Current parallel-api-upload
-│   ├── spot         # Current spot-upload
-│   └── single       # Current single-upload
-├── config
-│   ├── show
-│   └── validate
-└── utils
-    ├── yaml2json
-    └── validate-metadata
+
+## Advanced Features
+
+### Rate Limiting with Token Bucket
+```python
+class TokenBucket:
+    """Token bucket for rate limiting."""
+    def __init__(self, tokens: float, refill_rate: float):
+        self.capacity = tokens
+        self.tokens = tokens
+        self.refill_rate = refill_rate
+        self.last_refill = time.time()
+    
+    def consume(self, tokens: float = 1.0) -> bool:
+        """Try to consume tokens."""
+        self.refill()
+        if self.tokens >= tokens:
+            self.tokens -= tokens
+            return True
+        return False
+    
+    def refill(self):
+        """Refill tokens based on time passed."""
+        now = time.time()
+        tokens_to_add = (now - self.last_refill) * self.refill_rate
+        self.tokens = min(self.capacity, self.tokens + tokens_to_add)
+        self.last_refill = now
+```
+
+### Async Support
+```python
+import aiohttp
+import asyncio
+
+class AsyncGDCAPIClient:
+    """Async version of GDC API client."""
+    
+    async def upload_file_chunk_async(self, ...):
+        """Async file upload."""
+        pass
+```
+
+## Error Handling
+
+```python
+class GDCAPIException(Exception):
+    """Base exception for GDC API errors."""
+    pass
+
+class GDCAuthenticationError(GDCAPIException):
+    """Authentication failed."""
+    pass
+
+class GDCRateLimitError(GDCAPIException):
+    """Rate limit exceeded."""
+    pass
+
+class GDCServerError(GDCAPIException):
+    """Server-side error."""
+    pass
 ```
 
 ## Dependencies
 
-- Can start immediately (no dependencies on other agents)
-- Will need to coordinate with Agent 3 on strategy names
+- Can start immediately (no dependencies)
+- Coordinate with Agent 3 on integration points
+- Work with Agent 5 on mock implementations
 
 ## Success Criteria
 
-- 90% reduction in CLI code duplication
-- All commands use shared option definitions
-- Rich, informative output with progress indicators
-- Backward compatibility maintained
-- Comprehensive help text and examples
+- All API calls go through the client
+- Consistent error handling across all operations
+- Rate limiting prevents API throttling
+- Connection pooling improves performance
+- Comprehensive API documentation
+- Both sync and async support
 
 ## Getting Started
 
-1. Analyze current CLI structure and identify all duplications
-2. Design option groups and shared decorators
-3. Create proof-of-concept with one command
-4. Refactor all commands systematically
-5. Add rich output support
-6. Update progress in `specs/agent-4-progress.md`
+1. Analyze current API usage patterns
+2. Design the client interface
+3. Implement core client functionality
+4. Add rate limiting and connection pooling
+5. Create comprehensive error handling
+6. Document all endpoints and models
+7. Update progress in `specs/agent-6-progress.md`
 
-Remember: The CLI is the user's first interaction with the tool - make it intuitive and delightful to use!
+Remember: This client will be the single point of interaction with the GDC API - make it robust, performant, and easy to use!

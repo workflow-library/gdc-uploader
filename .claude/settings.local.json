@@ -45,7 +45,8 @@
       "Bash(owlkit deploy:*)",
       "Bash(owlkit:*)",
       "Bash(docker push:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(touch:*)"
     ],
     "deny": []
   },
