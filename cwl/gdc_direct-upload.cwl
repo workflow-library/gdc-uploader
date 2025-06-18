@@ -28,7 +28,7 @@ requirements:
 # ==============================================================================
 # COMMAND SECTION
 # ==============================================================================
-baseCommand: ["gdc_direct-upload.sh"]
+baseCommand: ["gdc-direct-upload"]
 # Script arguments will be handled by the external script
 
 # ==============================================================================

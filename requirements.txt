@@ -1,0 +1,5 @@
+click>=8.0
+requests>=2.25
+pyyaml>=5.4
+tqdm>=4.60
+requests-toolbelt>=0.9.1
