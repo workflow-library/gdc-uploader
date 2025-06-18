@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gdc-uploader"
-version = "1.0.0"
+version = "2.0.0"
 description = "Tool for uploading genomic sequence data files to the NCI Genomic Data Commons"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -29,6 +29,10 @@ dependencies = [
     "requests>=2.25",
     "pyyaml>=5.4",
     "tqdm>=4.60",
+    "rich>=10.0",
+    "pydantic>=1.8",
+    "aiohttp>=3.8",
+    "psutil>=5.8",
 ]
 
 [project.urls]
@@ -37,10 +41,7 @@ Repository = "https://github.com/open-workflow-library/gdc-uploader"
 Issues = "https://github.com/open-workflow-library/gdc-uploader/issues"
 
 [project.scripts]
-gdc-uploader = "gdc_uploader.cli:main"
-gdc-upload = "gdc_uploader.cli:upload"
-gdc-direct-upload = "gdc_uploader.cli:direct_upload"
-gdc-yaml2json = "gdc_uploader.cli:yaml2json"
+gdc-uploader = "gdc_uploader.main_cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]

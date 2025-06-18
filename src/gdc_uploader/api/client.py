@@ -471,3 +471,18 @@ class GDCAPIClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()
+        
+    def upload_file_simple(self, file_id: str, file_content: bytes, filename: str) -> Dict[str, Any]:
+        """Simple file upload method."""
+        # This is a simplified version - in reality would upload in chunks
+        return self.upload_file(file_id, file_content, len(file_content))
+        
+    def initiate_upload(self, file_id: str, file_size: int) -> Dict[str, Any]:
+        """Initiate a multipart upload."""
+        # Placeholder for multipart upload initiation
+        return {"upload_id": file_id, "status": "initiated"}
+        
+    def complete_upload(self, file_id: str) -> Dict[str, Any]:
+        """Complete a multipart upload."""
+        # Placeholder for multipart upload completion
+        return {"status": "completed"}

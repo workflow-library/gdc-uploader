@@ -10,7 +10,7 @@ from enum import Enum
 from pathlib import Path
 import re
 
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, validator, model_validator
 
 
 class FileState(str, Enum):
@@ -52,7 +52,7 @@ class FileUploadRequest(BaseModel):
     file_id: str = Field(
         ...,
         description="GDC file UUID",
-        regex="^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        pattern="^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
     )
     project_id: str = Field(
         ...,
@@ -71,7 +71,7 @@ class FileUploadRequest(BaseModel):
     )
     md5sum: Optional[str] = Field(
         None,
-        regex="^[a-f0-9]{32}$",
+        pattern="^[a-f0-9]{32}$",
         description="MD5 checksum of the file"
     )
     chunk_size: int = Field(
@@ -107,16 +107,14 @@ class FileUploadRequest(BaseModel):
             raise ValueError(f"Not a file: {path}")
         return path
     
-    @root_validator
-    def validate_resume_offset(cls, values):
+    @model_validator(mode='after')
+    def validate_resume_offset(self):
         """Ensure resume offset is within file size."""
-        resume_from = values.get('resume_from', 0)
-        file_size = values.get('file_size')
-        if file_size and resume_from >= file_size:
+        if self.file_size and self.resume_from >= self.file_size:
             raise ValueError(
-                f"Resume offset ({resume_from}) must be less than file size ({file_size})"
+                f"Resume offset ({self.resume_from}) must be less than file size ({self.file_size})"
             )
-        return values
+        return self
     
     class Config:
         json_encoders = {
@@ -281,7 +279,7 @@ class FileMetadata(BaseModel):
     
     file_name: str = Field(..., description="Original file name")
     file_size: int = Field(..., gt=0, description="File size in bytes")
-    md5sum: str = Field(..., regex="^[a-f0-9]{32}$", description="MD5 checksum")
+    md5sum: str = Field(..., pattern="^[a-f0-9]{32}$", description="MD5 checksum")
     file_format: Optional[str] = Field(None, description="File format (e.g., BAM, FASTQ)")
     data_category: Optional[str] = Field(None, description="Data category")
     data_type: Optional[str] = Field(None, description="Data type")

@@ -22,10 +22,9 @@ import sys
 import shutil
 from queue import Queue, Empty
 
-# Import from Agent 1's interfaces
-sys.path.append('/workspaces/gdc-uploader-agents/agent-1-core-architecture/specs/interfaces')
-from base_uploader_interface import UploadProgress, FileEntry, UploadStatus, ProgressMonitor
-from exceptions_interface import ReportGenerationError, ReportSaveError
+# Import from local modules
+from .base_uploader import FileEntry, UploadStatus, ProgressMonitor, UploadProgress
+from .exceptions import ReportGenerationError, ReportSaveError
 
 logger = logging.getLogger(__name__)
 

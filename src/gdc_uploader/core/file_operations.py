@@ -13,11 +13,9 @@ from dataclasses import dataclass, field
 from fnmatch import fnmatch
 import json
 
-# Import from Agent 1's interfaces
-import sys
-sys.path.append('/workspaces/gdc-uploader-agents/agent-1-core-architecture/specs/interfaces')
-from base_uploader_interface import FileEntry, FileDiscoveryStrategy
-from exceptions_interface import (
+# Import from local modules
+from .base_uploader import FileEntry, FileDiscoveryStrategy
+from .exceptions import (
     FileNotFoundError as GDCFileNotFoundError,
     InvalidDirectoryError,
     ValidationError,

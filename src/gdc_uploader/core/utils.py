@@ -13,17 +13,15 @@ import hashlib
 import tempfile
 import shutil
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union, Tuple, IO
+from typing import Dict, Any, Optional, List, Union, Tuple, IO, Callable
 from datetime import datetime, timezone
 from contextlib import contextmanager
 import platform
 import psutil
 import csv
 
-# Import from Agent 1's interfaces  
-import sys
-sys.path.append('/workspaces/gdc-uploader-agents/agent-1-core-architecture/specs/interfaces')
-from exceptions_interface import (
+# Use local exceptions
+from .exceptions import (
     InvalidMetadataError,
     TokenFileNotFoundError,
     InvalidTokenError,
@@ -32,6 +30,48 @@ from exceptions_interface import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def setup_logging(level: str = "INFO", log_file: Optional[Path] = None) -> None:
+    """Configure logging for the application.
+    
+    Args:
+        level: Logging level (DEBUG, INFO, WARNING, ERROR)
+        log_file: Optional file to write logs to
+    """
+    log_format = '[%(asctime)s] %(name)s - %(levelname)s - %(message)s'
+    
+    handlers = [logging.StreamHandler()]
+    if log_file:
+        handlers.append(logging.FileHandler(log_file))
+        
+    logging.basicConfig(
+        level=getattr(logging, level.upper()),
+        format=log_format,
+        handlers=handlers
+    )
+
+
+def yaml_to_json(yaml_file: Union[str, Path]) -> Dict[str, Any]:
+    """Convert YAML file to JSON format.
+    
+    Args:
+        yaml_file: Path to YAML file
+        
+    Returns:
+        Dictionary representation of YAML content
+    """
+    yaml_path = Path(yaml_file)
+    
+    if not yaml_path.exists():
+        raise FileNotFoundError(f"YAML file not found: {yaml_path}")
+        
+    try:
+        with open(yaml_path, 'r') as f:
+            data = yaml.safe_load(f)
+        return data
+    except yaml.YAMLError as e:
+        raise InvalidMetadataError(f"Invalid YAML format: {e}")
 
 
 # Metadata handling utilities

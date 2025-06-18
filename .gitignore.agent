@@ -1,4 +1,0 @@
-# Agent-specific temporary files
-*.tmp
-*.bak
-.agent-cache/

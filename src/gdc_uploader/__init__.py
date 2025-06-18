@@ -2,8 +2,13 @@
 
 __version__ = "2.0.0"
 
-from .upload import GDCUploader
-from .direct_upload import GDCDirectUploader
-from .utils import yaml_to_json
+from .uploaders import StandardUploader, APIUploader, SpotUploader, SingleFileUploader
+from .core.utils import yaml_to_json
 
-__all__ = ["GDCUploader", "GDCDirectUploader", "yaml_to_json"]
+__all__ = [
+    "StandardUploader",
+    "APIUploader", 
+    "SpotUploader",
+    "SingleFileUploader",
+    "yaml_to_json"
+]

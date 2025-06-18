@@ -17,10 +17,8 @@ from enum import Enum
 import requests
 from datetime import datetime
 
-# Import from Agent 1's interfaces
-import sys
-sys.path.append('/workspaces/gdc-uploader-agents/agent-1-core-architecture/specs/interfaces')
-from exceptions_interface import GDCUploaderError, UploadError, UploadTimeoutError
+# Import from local modules
+from .exceptions import GDCUploaderError, UploadError, UploadTimeoutError
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,33 @@
 # GDC Uploader
 
-A Python tool for uploading genomic sequence data files (BAM/FASTQ) to the National Cancer Institute's Genomic Data Commons (GDC) using the GDC Data Transfer Tool with parallel execution support.
+A prompt-based Python tool for uploading genomic sequence data files (BAM/FASTQ) to the National Cancer Institute's Genomic Data Commons (GDC) using the GDC Data Transfer Tool with parallel execution support.
+
+## Project Structure
+
+This project uses a **prompt-first architecture** where tool definitions are written as markdown prompts, and CWL files, Dockerfiles, and documentation are generated from these prompts.
+
+### Directory Layout
+
+```
+prompts/                  # Tool definitions as markdown
+├── gdc_upload.md        # Main upload tool
+├── gdc_yaml2json.md     # YAML to JSON converter
+└── meta/                # Meta-prompts for project structure
+
+src/gdc_uploader/        # Python implementation
+├── emit/                # Artifact generators
+├── parser.py            # Prompt parser
+└── uploaders/           # Upload strategies
+
+artifacts/               # Generated files
+├── cwl/                # CWL tool definitions
+├── docker/             # Dockerfiles
+└── notebooks/          # Quarto notebooks
+
+legacy/                  # Previous implementation
+├── cwl/                # Original CWL files
+└── scripts/            # Original scripts
+```
 
 ## Features
 
@@ -40,6 +67,21 @@ docker pull ghcr.io/open-workflow-library/gdc-uploader:latest
 - GDC authentication token (obtain from [GDC Data Portal](https://portal.gdc.cancer.gov/))
 - GDC metadata JSON file containing file UUIDs
 - `gdc-client` executable (automatically included in Docker image)
+
+## Generating Artifacts
+
+To generate CWL, Docker, and notebook files from prompts:
+
+```bash
+# Generate all artifacts
+gdc-uploader emit
+
+# Generate with custom directories
+gdc-uploader emit --prompts-dir my-prompts --output-dir my-artifacts
+
+# Force regeneration
+gdc-uploader emit --force
+```
 
 ## Quick Start
 
