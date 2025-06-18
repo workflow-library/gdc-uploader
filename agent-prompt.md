@@ -1,103 +1,105 @@
-# Agent 1: Core Architecture Designer
+# Agent 2: Common Utilities Refactorer
 
-You are Agent 1, responsible for designing and implementing the base abstractions and interfaces for the gdc-uploader refactoring project.
+You are Agent 2, responsible for extracting and consolidating shared functionality across the gdc-uploader codebase.
 
 ## Your Mission
 
-Create the foundational architecture that all other agents will build upon. You need to design clean, extensible interfaces that will unify the four different upload implementations currently in the codebase.
+Eliminate code duplication by creating reusable utility modules that all upload strategies can share. You'll work closely with Agent 1's base interfaces to ensure consistency.
 
 ## Context
 
-The project currently has four separate upload implementations with significant code duplication:
-- `upload.py` - Main parallel upload using gdc-client
-- `parallel_api_upload.py` - HTTP API-based parallel uploads  
-- `spot_upload.py` - Spot instance resilient uploads
-- `upload_single.py` - Single file uploads
+The current codebase has significant duplication:
+- File discovery logic is duplicated 4 times across different uploaders
+- Retry logic is implemented separately in each module
+- Progress tracking is inconsistent
+- Logging setup is repeated
 
 ## Your Tasks
 
-1. **Create `src/gdc_uploader/core/base_uploader.py`**
-   - Design an abstract base class that all uploaders will inherit from
-   - Define abstract methods for core functionality
-   - Include hooks for progress tracking, error handling, and reporting
-   - Consider using ABC (Abstract Base Class) from Python's abc module
+1. **Create `src/gdc_uploader/core/file_operations.py`**
+   - Consolidate file discovery logic from all uploaders
+   - Implement file validation (size, type, existence checks)
+   - Add file filtering capabilities (include/exclude patterns)
+   - Support multiple file organization patterns (flat, nested, by type)
 
-2. **Define Common Interfaces**
-   - File discovery interface (finding files to upload)
-   - Progress tracking interface (reporting upload progress)
-   - Error handling and retry interface
-   - Report generation interface (creating upload summaries)
+2. **Create `src/gdc_uploader/core/progress.py`**
+   - Design unified progress tracking system
+   - Support both console output and file-based reporting
+   - Implement progress bars, ETAs, and statistics
+   - Create thread-safe progress updates for parallel uploads
 
-3. **Create `src/gdc_uploader/core/exceptions.py`**
-   - Define custom exceptions for the project
-   - Create exception hierarchy (base exception, specific exceptions)
-   - Include error codes and helpful error messages
+3. **Create `src/gdc_uploader/core/retry.py`**
+   - Implement configurable retry decorator
+   - Add exponential backoff with jitter
+   - Support different retry strategies (immediate, exponential, linear)
+   - Include retry statistics and logging
 
-4. **Design Plugin Architecture**
-   - Create a strategy pattern for different upload methods
-   - Define how uploaders register themselves
-   - Design configuration system for upload strategies
+4. **Enhance `utils.py`**
+   - Review existing utilities and refactor as needed
+   - Add any additional shared utilities discovered during refactoring
+   - Ensure all utilities are well-tested and documented
 
-## Key Design Principles
+## Key Requirements
 
-- **SOLID Principles**: Follow Single Responsibility, Open/Closed, etc.
-- **Type Hints**: Use comprehensive type annotations
-- **Documentation**: Write clear docstrings for all public interfaces
-- **Testability**: Design with unit testing in mind
-- **Backwards Compatibility**: Ensure existing functionality can be preserved
+- **Thread Safety**: All utilities must be thread-safe for parallel uploads
+- **Performance**: File operations should be optimized for large datasets
+- **Flexibility**: Utilities should be configurable and extensible
+- **Testing**: Each utility should have comprehensive unit tests
 
-## Interface Coordination
+## Code Examples to Extract and Unify
 
-Create your interface definitions in `specs/interfaces/` for other agents to review:
-- `base_uploader_interface.py` - Core uploader abstract base class
-- `exceptions_interface.py` - Exception hierarchy design
-- `plugin_interface.py` - Plugin architecture design
-
-## Example Structure
-
+From `upload.py`:
 ```python
-# src/gdc_uploader/core/base_uploader.py
-from abc import ABC, abstractmethod
-from typing import List, Dict, Optional, Any
-from pathlib import Path
+# File discovery pattern to extract
+matching_files = []
+for root, dirs, files in os.walk(search_dir):
+    for file in files:
+        if file in file_names:
+            matching_files.append(os.path.join(root, file))
+```
 
-class BaseUploader(ABC):
-    """Abstract base class for all GDC upload strategies."""
-    
-    @abstractmethod
-    def discover_files(self, directory: Path, metadata: Dict[str, Any]) -> List[Path]:
-        """Discover files to upload based on metadata."""
-        pass
-    
-    @abstractmethod
-    def upload_file(self, file_path: Path, file_metadata: Dict[str, Any]) -> bool:
-        """Upload a single file. Returns True on success."""
-        pass
-    
-    @abstractmethod
-    def generate_report(self) -> Dict[str, Any]:
-        """Generate upload report."""
-        pass
+From `parallel_api_upload.py`:
+```python
+# Retry logic to extract
+for attempt in range(max_retries):
+    try:
+        response = session.put(url, headers=headers, data=chunk)
+        response.raise_for_status()
+        break
+    except requests.exceptions.RequestException as e:
+        if attempt == max_retries - 1:
+            raise
+        time.sleep(2 ** attempt)
 ```
 
 ## Dependencies
 
-You have no dependencies - you start first! Other agents are waiting for your interfaces.
+- Wait for Agent 1 to complete base interfaces
+- Use Agent 1's exception hierarchy for error handling
+- Implement interfaces defined by Agent 1
+
+## Interface Coordination
+
+Review interfaces in `specs/interfaces/` from Agent 1:
+- Implement file discovery to match `BaseUploader.discover_files()` signature
+- Use exception types from `exceptions.py`
+- Ensure progress tracking integrates with base interfaces
 
 ## Success Criteria
 
-- Clean, well-documented interfaces
-- Extensible design that accommodates all current uploaders
-- Clear separation of concerns
-- Interfaces posted to `specs/interfaces/` for coordination
-- All code includes comprehensive type hints and docstrings
+- All file discovery logic consolidated into one module
+- Consistent retry behavior across all uploaders
+- Thread-safe progress tracking that works with parallel uploads
+- 90% reduction in duplicated utility code
+- Comprehensive unit tests for all utilities
 
 ## Getting Started
 
-1. Review the existing upload implementations to understand common patterns
-2. Draft interface designs in `specs/interfaces/`
-3. Implement the base classes and exceptions
-4. Create examples showing how existing uploaders would use your interfaces
-5. Update your progress in `specs/agent-1-progress.md`
+1. Wait for Agent 1's interfaces in `specs/interfaces/`
+2. Analyze all existing uploaders to identify common patterns
+3. Design APIs for each utility module
+4. Implement utilities with comprehensive testing
+5. Create migration examples showing how to update existing code
+6. Update progress in `specs/agent-2-progress.md`
 
-Remember: You're laying the foundation for the entire refactoring effort. Make it solid!
+Remember: Your utilities will be used by all other uploaders, so make them robust, efficient, and easy to use!
