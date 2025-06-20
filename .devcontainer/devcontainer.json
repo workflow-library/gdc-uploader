@@ -1,6 +1,5 @@
 {
   "name": "Claude + CWL + GHCR",
-  "image": "mcr.microsoft.com/devcontainers/python:3.11",
   "postCreateCommand": "npm install -g @anthropic-ai/claude-code && pip install cwltool sbpack && docker login ghcr.io -u davidroberson -p $GHCR_PAT",
   "secrets": {
     "GHCR_PAT": {
