@@ -7,7 +7,7 @@ baseCommand: [python, -m, gdc_uploader.upload]
 requirements:
   - class: InlineJavascriptRequirement
   - class: DockerRequirement
-    dockerPull: gdc-uploader:latest
+    dockerPull: ghcr.io/workflow-library/gdc-uploader:latest
   - class: EnvVarRequirement
     envDef:
       CWL_RUNTIME: "true"

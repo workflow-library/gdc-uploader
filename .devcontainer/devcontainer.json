@@ -4,5 +4,17 @@
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11"
     }
+  },
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "workflow-library/gdc-uploader": {
+          "permissions": {
+            "packages": "write",
+            "contents": "write"
+          }
+        }
+      }
+    }
   }
 }
