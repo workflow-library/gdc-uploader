@@ -1,11 +1,21 @@
 {
-  "postCreateCommand": "docker login ghcr.io -u YOUR_USERNAME -p $GHCR_PAT",
+  "name": "Claude + CWL + GHCR",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code && pip install cwltool sbpack && docker login ghcr.io -u davidroberson -p $GHCR_PAT",
   "secrets": {
     "GHCR_PAT": {
-      "description": "PAT with write:packages for GHCR"
+      "description": "GitHub token for pushing Docker images to ghcr.io"
     }
   },
   "customizations": {
-    "codespaces": { "permissions": { "contents": "write", "packages": "write" } }
+    "codespaces": {
+      "permissions": {
+        "contents": "write",
+        "packages": "write"
+      }
+    }
+  },
+  "hostRequirements": {
+    "cpus": 4
   }
 }
