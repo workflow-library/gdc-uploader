@@ -1,0 +1,14 @@
+[
+  {
+    "id": "test-id-001",
+    "file_name": "test_sample1.fastq.gz",
+    "file_size": 1234567,
+    "md5sum": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "id": "test-id-002", 
+    "file_name": "test_sample2.fastq.gz",
+    "file_size": 2345678,
+    "md5sum": "e3b0c44298fc1c149afbf4c8996fb924"
+  }
+]

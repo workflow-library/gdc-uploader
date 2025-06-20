@@ -1,15 +1,8 @@
 {
-  "customizations": {
-    "codespaces": {
-      "repositories": {
-        "open-workflow-library/owlkit": {
-          "permissions": "write-all"
-        },
-        "open-workflow-library/owlstacks": {
-          "permissions": "write-all"
-        }
-      }
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code && pip install cwltool sbpack",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
     }
-  },
-  "postCreateCommand": "mkdir -p zed && git clone https://github.com/open-workflow-library/owlkit.git zed/owlkit && git clone https://github.com/open-workflow-library/owlstacks.git zed/owlstacks && npm install -g @anthropic-ai/claude-code"
+  }
 }

@@ -2,12 +2,12 @@
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-build/
-develop-eggs/
+*.egg-info/
 dist/
-downloads/
+build/
+.coverage
+.pytest_cache/
+.mypy_cache/
 eggs/
 .eggs/
 lib/
