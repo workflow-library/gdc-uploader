@@ -4,16 +4,17 @@ GDC validation functions for manifest and metadata.
 """
 
 import json
+import yaml
 from pathlib import Path
 from typing import Dict, List, Any
 
 
 def validate_manifest(manifest_path: Path) -> List[Dict[str, Any]]:
     """
-    Validate and parse GDC manifest file.
+    Validate and parse GDC manifest file (JSON or YAML).
     
     Args:
-        manifest_path: Path to manifest JSON file
+        manifest_path: Path to manifest JSON or YAML file
         
     Returns:
         List of file entries from manifest
@@ -24,11 +25,18 @@ def validate_manifest(manifest_path: Path) -> List[Dict[str, Any]]:
     if not manifest_path.exists():
         raise ValueError(f"Manifest file not found: {manifest_path}")
     
+    # Determine file type and parse accordingly
+    suffix = manifest_path.suffix.lower()
+    
     try:
         with open(manifest_path) as f:
-            data = json.load(f)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in manifest: {e}")
+            if suffix in ['.yaml', '.yml']:
+                data = yaml.safe_load(f)
+            else:
+                # Default to JSON for .json or unknown extensions
+                data = json.load(f)
+    except (json.JSONDecodeError, yaml.YAMLError) as e:
+        raise ValueError(f"Invalid {suffix[1:].upper() if suffix else 'JSON'} in manifest: {e}")
     
     # Handle both array and dict formats
     if isinstance(data, list):

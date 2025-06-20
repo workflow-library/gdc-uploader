@@ -1,0 +1,11 @@
+manifest:
+  class: File
+  path: test-manifest.yaml
+
+file_to_upload:
+  class: File
+  path: test-sample.txt
+
+token:
+  class: File
+  path: test-token.txt

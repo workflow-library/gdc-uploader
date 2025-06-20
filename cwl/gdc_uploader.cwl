@@ -2,7 +2,11 @@
 
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: [python, -m, gdc_uploader.upload]
+baseCommand: [gdc-http-upload]
+
+arguments:
+  - prefix: --file
+    valueFrom: $(inputs.file_to_upload.basename)
 
 requirements:
   - class: InlineJavascriptRequirement
@@ -12,18 +16,22 @@ requirements:
     envDef:
       CWL_RUNTIME: "true"
 
+hints:
+  - class: 'sbg:useSbgFS'
+    value: 'true'
+
 inputs:
   manifest:
     type: File
     inputBinding:
       prefix: --manifest
-    doc: "GDC manifest JSON file"
+    doc: "GDC manifest file (JSON or YAML)"
   
-  filename:
-    type: string
+  file_to_upload:
+    type: File
     inputBinding:
-      prefix: --file
-    doc: "Target filename to upload"
+      prefix: --file-path
+    doc: "The actual file to upload to GDC"
   
   token:
     type: File

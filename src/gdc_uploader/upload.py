@@ -26,11 +26,11 @@ class SimpleProgress:
         
     def update(self, n):
         self.current += n
-        percent = int(100 * self.current / self.total)
+        percent = 100 * self.current / self.total
         
-        # Only print at 10% intervals to avoid log spam
-        if percent >= self.last_percent + 10:
-            print(f"{self.desc}: {percent}% ({self.current:,}/{self.total:,} bytes)")
+        # Print at 0.25% intervals for ~400 updates on very large files
+        if percent >= self.last_percent + 0.25:
+            print(f"{self.desc}: {percent:.2f}% ({self.current:,}/{self.total:,} bytes)")
             sys.stdout.flush()
             self.last_percent = percent
     
@@ -132,13 +132,15 @@ def upload_file_with_progress(file_path, file_id, token, chunk_size=8192, progre
 @click.option('--manifest', '-m', required=True, type=click.Path(exists=True), 
               help='GDC manifest JSON file')
 @click.option('--file', '-f', required=True, help='Target filename to upload')
+@click.option('--file-path', type=click.Path(exists=True),
+              help='Actual path to the file (if different from filename)')
 @click.option('--token', '-t', required=True, type=click.Path(exists=True),
               help='GDC token file')
 @click.option('--progress-mode', '-p',
               type=click.Choice(['auto', 'simple', 'bar', 'none']),
               default='auto',
               help='Progress display mode (auto detects environment)')
-def main(manifest, file, token, progress_mode):
+def main(manifest, file, file_path, token, progress_mode):
     """Upload file to GDC with environment-aware progress monitoring."""
     try:
         # Validate inputs
@@ -151,12 +153,17 @@ def main(manifest, file, token, progress_mode):
         file_id = entry['id']
         
         # Find actual file
-        file_path = find_file(file)
-        if not file_path:
-            click.echo(f"Error: File '{file}' not found", err=True)
-            sys.exit(1)
+        if file_path:
+            # Use provided file path
+            actual_file_path = Path(file_path)
+        else:
+            # Search for file by name
+            actual_file_path = find_file(file)
+            if not actual_file_path:
+                click.echo(f"Error: File '{file}' not found", err=True)
+                sys.exit(1)
         
-        click.echo(f"Found file: {file_path}")
+        click.echo(f"Found file: {actual_file_path}")
         click.echo(f"File ID: {file_id}")
         
         # Validate token
@@ -165,7 +172,7 @@ def main(manifest, file, token, progress_mode):
         # Upload with progress
         click.echo("Starting upload...")
         result = upload_file_with_progress(
-            file_path, 
+            actual_file_path, 
             file_id, 
             token_value,
             progress_mode=progress_mode

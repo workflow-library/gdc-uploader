@@ -46,7 +46,8 @@
       "Bash(owlkit:*)",
       "Bash(docker push:*)",
       "Bash(git tag:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(./tests/run-cwl-test.sh:*)"
     ],
     "deny": []
   },

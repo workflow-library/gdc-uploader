@@ -1,0 +1,2 @@
+This is a test file for GDC upload via CWL.
+It contains sample data for testing the upload functionality.

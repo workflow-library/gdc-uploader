@@ -1,0 +1,13 @@
+files:
+- data_category: Sequencing Reads
+  data_format: BAM
+  data_type: Aligned Reads
+  experimental_strategy: WGS
+  file_name: test-sample.txt
+  file_size: 105
+  id: 550e8400-e29b-41d4-a716-446655440000
+  local_file_path: test-sample.txt
+  md5sum: test-md5sum
+  project_id: TEST-PROJECT
+  submitter_id: test-sample.txt
+  type: submitted_aligned_reads
