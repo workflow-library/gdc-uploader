@@ -1,14 +1,11 @@
 {
-  "postCreateCommand": "npm install -g @anthropic-ai/claude-code && pip install cwltool sbpack",
-  "hostRequirements": {
-    "cpus": 4
+  "postCreateCommand": "docker login ghcr.io -u YOUR_USERNAME -p $GHCR_PAT",
+  "secrets": {
+    "GHCR_PAT": {
+      "description": "PAT with write:packages for GHCR"
+    }
   },
   "customizations": {
-    "codespaces": {
-      "permissions": {
-        "packages": "write",
-        "contents": "write"
-      }
-    }
+    "codespaces": { "permissions": { "contents": "write", "packages": "write" } }
   }
 }
