@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import patch, Mock
 from io import StringIO
 
-from gdc_uploader.upload_robust import (
+from gdc_uploader.upload import (
     detect_environment,
     get_progress_handler,
     upload_file_with_progress,
@@ -17,33 +17,35 @@ from gdc_uploader.upload_robust import (
 )
 
 
+@pytest.fixture
+def sbp_env():
+    """Fixture to simulate SBP environment."""
+    env_vars = {
+        'SBP_TASK_ID': 'test-task-123',
+        'SBP_PROJECT_ID': 'test-project',
+        'TERM': 'dumb',  # SBP often has limited terminal
+    }
+    with patch.dict(os.environ, env_vars):
+        # Also patch isatty to return False
+        with patch('sys.stdout.isatty', return_value=False):
+            yield env_vars
+
+
+@pytest.fixture
+def cwl_env():
+    """Fixture to simulate CWL environment."""
+    env_vars = {
+        'CWL_RUNTIME': 'true',
+        'TMPDIR': '/tmp/cwl_tmp',
+        'HOME': '/tmp/home',
+    }
+    with patch.dict(os.environ, env_vars):
+        with patch('sys.stdout.isatty', return_value=False):
+            yield env_vars
+
+
 class TestSBPEnvironment:
     """Test behavior in simulated SBP environment."""
-    
-    @pytest.fixture
-    def sbp_env(self):
-        """Fixture to simulate SBP environment."""
-        env_vars = {
-            'SBP_TASK_ID': 'test-task-123',
-            'SBP_PROJECT_ID': 'test-project',
-            'TERM': 'dumb',  # SBP often has limited terminal
-        }
-        with patch.dict(os.environ, env_vars):
-            # Also patch isatty to return False
-            with patch('sys.stdout.isatty', return_value=False):
-                yield env_vars
-    
-    @pytest.fixture
-    def cwl_env(self):
-        """Fixture to simulate CWL environment."""
-        env_vars = {
-            'CWL_RUNTIME': 'true',
-            'TMPDIR': '/tmp/cwl_tmp',
-            'HOME': '/tmp/home',
-        }
-        with patch.dict(os.environ, env_vars):
-            with patch('sys.stdout.isatty', return_value=False):
-                yield env_vars
     
     def test_sbp_environment_detection(self, sbp_env):
         """Test that SBP environment is correctly detected."""
@@ -64,7 +66,7 @@ class TestSBPEnvironment:
         """Test that SBP environment forces simple progress."""
         handler = get_progress_handler(1000, "Upload", mode='auto')
         
-        from gdc_uploader.upload_robust import SimpleProgress
+        from gdc_uploader.upload import SimpleProgress
         assert isinstance(handler, SimpleProgress)
     
     def test_progress_output_in_sbp(self, sbp_env, tmp_path, capsys):
@@ -73,7 +75,7 @@ class TestSBPEnvironment:
         test_content = b"X" * 10000  # 10KB
         test_file.write_bytes(test_content)
         
-        with patch('gdc_uploader.upload_robust.requests.put') as mock_put:
+        with patch('gdc_uploader.upload.requests.put') as mock_put:
             def mock_put_func(*args, **kwargs):
                 # Consume data to trigger progress
                 data_gen = kwargs.get('data')
@@ -122,7 +124,7 @@ class TestSBPEnvironment:
         output = StringIO()
         
         with patch('sys.stdout', output):
-            with patch('gdc_uploader.upload_robust.requests.put') as mock_put:
+            with patch('gdc_uploader.upload.requests.put') as mock_put:
                 mock_response = Mock()
                 mock_response.json.return_value = {"status": "success"}
                 mock_response.raise_for_status.return_value = None
@@ -171,7 +173,7 @@ class TestCWLIntegration:
         
         with patch.dict(os.environ, {'CWL_RUNTIME': 'true'}):
             from click.testing import CliRunner
-            from gdc_uploader.upload_robust import main
+            from gdc_uploader.upload import main
             
             runner = CliRunner()
             
@@ -179,7 +181,7 @@ class TestCWLIntegration:
             try:
                 os.chdir(cwl_staging)
                 
-                with patch('gdc_uploader.upload_robust.requests.put') as mock_put:
+                with patch('gdc_uploader.upload.requests.put') as mock_put:
                     mock_response = Mock()
                     mock_response.json.return_value = {"status": "success"}
                     mock_response.raise_for_status.return_value = None
@@ -218,7 +220,7 @@ class TestProgressModeSelection:
             with patch('sys.stdout.isatty', return_value=False):
                 handler = get_progress_handler(1000, "Test", mode='auto')
                 
-                from gdc_uploader.upload_robust import SimpleProgress
+                from gdc_uploader.upload import SimpleProgress
                 if expected_simple or not sys.stdout.isatty():
                     assert isinstance(handler, SimpleProgress)
 
@@ -229,7 +231,7 @@ class TestErrorHandlingInSBP:
     def test_error_output_format(self, sbp_env, tmp_path):
         """Test that errors are clearly formatted in SBP."""
         from click.testing import CliRunner
-        from gdc_uploader.upload_robust import main
+        from gdc_uploader.upload import main
         
         # Missing manifest file
         runner = CliRunner()

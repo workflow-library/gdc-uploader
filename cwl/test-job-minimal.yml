@@ -1,3 +1,4 @@
+# Minimal job file with only required parameters
 manifest:
   class: File
   path: test-manifest.yaml

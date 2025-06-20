@@ -1,0 +1,20 @@
+manifest:
+  class: File
+  path: test-manifest.yaml
+
+file_to_upload:
+  class: File
+  path: test-sample.txt
+
+token:
+  class: File
+  path: test-token.txt
+
+# Optional: specify output log file
+output_file: "gdc_upload.log"
+
+# Optional: append to existing log
+append_log: false
+
+# Optional: progress mode (auto, simple, bar, none)
+progress_mode: "simple"

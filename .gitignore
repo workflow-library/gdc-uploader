@@ -43,6 +43,7 @@ env/
 .pydevproject
 .zed/
 zed/
+.claude/
 
 # OS
 .DS_Store

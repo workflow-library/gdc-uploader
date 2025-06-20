@@ -41,3 +41,8 @@ gdc-http-upload = "gdc_uploader.upload:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+norecursedirs = "cwl fixtures"

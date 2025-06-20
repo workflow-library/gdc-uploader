@@ -45,12 +45,30 @@ inputs:
     inputBinding:
       prefix: --progress-mode
     doc: "Progress display mode: auto, simple, bar, or none"
+  
+  output_file:
+    type: string?
+    inputBinding:
+      prefix: --output
+    doc: "Save output to log file (optional)"
+  
+  append_log:
+    type: boolean?
+    default: false
+    inputBinding:
+      prefix: --append
+    doc: "Append to output file instead of overwriting"
 
 outputs:
   upload_log:
     type: stdout
+  
+  log_file:
+    type: File?
+    outputBinding:
+      glob: $(inputs.output_file)
 
-stdout: upload_output.json
+stdout: upload_output.txt
 
 $namespaces:
   s: https://schema.org/

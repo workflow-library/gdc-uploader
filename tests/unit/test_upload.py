@@ -8,6 +8,8 @@ from unittest.mock import Mock, patch, MagicMock
 from io import BytesIO
 import os
 
+from click.testing import CliRunner
+
 from gdc_uploader.upload import (
     upload_file_with_progress, 
     SimpleProgress,
@@ -23,31 +25,38 @@ class TestSimpleProgress:
     
     def test_simple_progress_updates(self, capsys):
         """Test that SimpleProgress prints at correct intervals."""
-        progress = SimpleProgress(1000, "Testing")
+        progress = SimpleProgress(10000, "Testing")  # Larger file for finer control
         
         with progress as p:
             # Initial message
             captured = capsys.readouterr()
-            assert "Testing: 0% (0/1,000 bytes)" in captured.out
+            assert "Testing: 0.00% (0.00/0.00 GB)" in captured.out
             
-            # Small update - no output
-            p.update(50)
+            # First update triggers because last_percent starts at -1
+            p.update(10)  # 0.1%
+            captured = capsys.readouterr()
+            assert "Testing: 0.10%" in captured.out
+            
+            # Small update - no output (less than 0.25% from last)
+            p.update(10)  # 0.2% total
             captured = capsys.readouterr()
             assert captured.out == ""
             
-            # 10% update - should print
-            p.update(50)  # Now at 100/1000 = 10%
+            # Update to trigger 0.25% threshold
+            p.update(20)  # Now at 0.4%
             captured = capsys.readouterr()
-            assert "Testing: 10% (100/1,000 bytes)" in captured.out
+            assert "Testing: 0.40%" in captured.out
+            assert " GB) - " in captured.out
+            assert " MB/s" in captured.out
             
             # Jump to 50%
-            p.update(400)
+            p.update(4960)
             captured = capsys.readouterr()
-            assert "Testing: 50% (500/1,000 bytes)" in captured.out
+            assert "Testing: 50.00%" in captured.out
         
         # Exit should print 100%
         captured = capsys.readouterr()
-        assert "Testing: 100% (1,000/1,000 bytes)" in captured.out
+        assert "Testing: 100.00% (0.00/0.00 GB)" in captured.out
 
 
 class TestEnvironmentDetection:
@@ -126,8 +135,10 @@ class TestUploadWithProgress:
             )
             
             captured = capsys.readouterr()
-            assert "Uploading: 0%" in captured.out
-            assert "Uploading: 100%" in captured.out
+            assert "Uploading: 0.00%" in captured.out
+            assert "Uploading: 100.00%" in captured.out
+            assert " GB) - " in captured.out
+            assert " MB/s" in captured.out
             assert result["status"] == "success"
     
     def test_upload_no_progress(self, tmp_path, capsys):
@@ -190,6 +201,51 @@ class TestCLI:
                 assert result.exit_code == 0
                 assert "Starting upload..." in result.output
                 assert "✓ Upload successful!" in result.output
+        finally:
+            os.chdir(original_dir)
+    
+    def test_cli_with_output_file(self, tmp_path):
+        """Test CLI with output file logging."""
+        manifest = [{
+            "id": "test-123",
+            "file_name": "test.txt",
+            "file_size": 100
+        }]
+        
+        manifest_file = tmp_path / "manifest.json"
+        manifest_file.write_text(json.dumps(manifest))
+        
+        token_file = tmp_path / "token.txt"
+        token_file.write_text("test-token-abc123def456ghi789")
+        
+        test_file = tmp_path / "test.txt"
+        test_file.write_text("Test content")
+        
+        log_file = tmp_path / "upload.log"
+        
+        runner = CliRunner()
+        
+        original_dir = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+            
+            with patch('gdc_uploader.upload.upload_file_with_progress') as mock_upload:
+                mock_upload.return_value = {"status": "success", "file_id": "test-123"}
+                
+                result = runner.invoke(main, [
+                    '--manifest', 'manifest.json',
+                    '--file', 'test.txt',
+                    '--token', 'token.txt',
+                    '--output', str(log_file)
+                ])
+                
+                assert result.exit_code == 0
+                assert log_file.exists()
+                
+                log_content = log_file.read_text()
+                assert "GDC Upload Log" in log_content
+                assert "test.txt" in log_content
+                assert '"status": "success"' in log_content
         finally:
             os.chdir(original_dir)
 
