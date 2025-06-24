@@ -75,6 +75,8 @@ agent-prompt.md
 # Test outputs
 tests/test-output/
 tests/tasks/
+/test_data
+
 
 # Seven Bridges
 task_*
